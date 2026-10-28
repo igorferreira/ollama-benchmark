@@ -1,0 +1,14 @@
+# Alternative standalone Compose file for native Linux Docker Engine.
+# Do not merge with compose.yaml: host networking must not publish ports.
+services:
+  benchmark:
+    build: .
+    network_mode: host
+    environment:
+      APP_BIND: 127.0.0.1
+      OLLAMA_URL: http://127.0.0.1:11434
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

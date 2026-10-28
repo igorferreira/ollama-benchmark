@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="benchmark-token" content="__TOKEN__">
+<title>Ollama Benchmark Local</title>
+<script src="/app.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<header><div class="header-top"><p class="eyebrow">DESEMPENHO LOCAL</p><label class="theme-control" for="theme-select">Tema<select id="theme-select" aria-label="Tema da interface"><option value="light">Claro</option><option value="dark">Escuro</option></select></label></div><h1>Ollama Benchmark</h1><p>Compare velocidade e tempo de resposta dos seus modelos.</p></header>
+<section aria-labelledby="connection-title"><div class="section-head"><h2 id="connection-title">1. Conexão e modelos</h2><button id="refresh" type="button">Atualizar modelos</button></div><p id="connection" role="status">Consultando Ollama…</p><div id="models" class="models"></div></section>
+<form id="benchmark-form">
+<section aria-labelledby="settings-title"><h2 id="settings-title">2. Configure o teste</h2>
+<label for="prompt">Pedido enviado a todos os modelos</label><textarea id="prompt" rows="4" maxlength="16000" required>Explique em português como funciona uma API REST. Descreva recursos, métodos HTTP, códigos de resposta e dê exemplos práticos. Escreva uma explicação detalhada.</textarea>
+<div class="fields">
+<label>Limite de saída (tokens)<input id="num_predict" type="number" min="1" max="4096" value="128" required></label>
+<label>Contexto (tokens)<input id="num_ctx" type="number" min="512" max="131072" value="4096" required></label>
+<label>Execuções por modelo<input id="repetitions" type="number" min="2" max="10" value="3" required></label>
+<label>Tempo máximo por execução (s)<input id="timeout" type="number" min="10" max="1800" value="180" required></label>
+</div>
+<label class="check"><input id="think" type="checkbox"> Ativar raciocínio nos modelos compatíveis</label>
+<p class="note">O teste usa temperatura 0 e seed 42. Mesmo pedido repetido pode aproveitar cache. Outros aplicativos usando o Ollama alteram os tempos. Não há isolamento entre clientes.</p>
+<div class="actions"><button id="start" class="primary" type="submit">Iniciar comparação</button><button id="cancel" type="button" disabled>Cancelar teste</button></div>
+</section></form>
+<p id="error" role="alert" hidden></p>
+<section aria-labelledby="results-title"><div class="section-head"><h2 id="results-title">3. Resultados</h2><div class="exports"><a href="/api/export?format=csv" download>Baixar CSV</a><a href="/api/export?format=json" download>Baixar JSON</a></div></div>
+<p id="progress" role="status">Nenhum teste iniciado.</p><progress id="progress-bar" value="0" max="1" aria-label="Execuções concluídas"></progress>
+<p class="note">Resumo: mediana das execuções 2 em diante. A primeira execução aparece separada, mesmo quando o modelo já estava carregado.</p>
+<div class="table-wrap"><table><caption>Comparação das execuções repetidas</caption><thead><tr><th>Modelo</th><th>Repetições válidas</th><th>Tokens/s</th><th>Primeiro texto (s)</th><th>Total (s)</th><th>Primeira chamada (s)</th></tr></thead><tbody id="summary"><tr><td colspan="6">Os resultados aparecerão aqui.</td></tr></tbody></table></div>
+<details open><summary>Execuções individuais e métricas</summary><div class="table-wrap"><table><thead><tr><th>Modelo / execução</th><th>Estado</th><th>Carregado antes</th><th>Tokens</th><th>Tokens/s</th><th>Primeiro conteúdo (s)</th><th>Primeiro texto (s)</th><th>Total medido (s)</th><th>Total Ollama (s)</th><th>Carga (s)</th><th>Prompt (s)</th><th>Geração (s)</th></tr></thead><tbody id="rows"><tr><td colspan="12">Sem execuções.</td></tr></tbody></table></div></details>
+<details><summary>Texto gerado e mensagens de erro</summary><div id="responses"></div></details>
+<p class="note">Primeiro conteúdo inclui raciocínio, quando presente. Primeiro texto mede o início da resposta visível. Tokens são contados pelo Ollama, não por fragmentos do stream. Memória de GPU não mede utilização nem identifica Vulkan/ROCm.</p>
+</section>
+<footer>Somente sua máquina. Sem pacotes Python externos. Resultados ficam na memória até fechar ou iniciar outro teste; exporte para guardar.</footer>
+</main>
+</body>
+</html>

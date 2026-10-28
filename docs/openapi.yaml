@@ -1,0 +1,1201 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ollama Benchmark Local",
+    "version": "baseline-2026-10-28",
+    "description": "Contrato retrospectivo da versão implementada. JSON é subconjunto de YAML; este arquivo pode ser lido com json.load. Runtime continua somente Python stdlib. Interface local pessoal; não servidor público. Tema é estado do navegador e não altera API."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8765",
+      "description": "Porta padrão; Host deve incluir a porta real."
+    }
+  ],
+  "x-host-allowlist": [
+    "127.0.0.1:<porta_real>",
+    "localhost:<porta_real>"
+  ],
+  "x-common-response-headers": {
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+  },
+  "x-limitations": [
+    "Origin não autentica processos locais.",
+    "GET desconhecido retorna404JSON; métodos não implementados retornam501HTML da classe base.",
+    "Campos Ollama copiados sem validação têm schemas abertos de propósito.",
+    "Nenhum token real, dado pessoal ou evidência local faz parte deste contrato."
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "getPage",
+        "summary": "Obtém página e token da instância.",
+        "responses": {
+          "200": {
+            "description": "HTML com token no meta benchmark-token. Não registrar token real em exemplos.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/app.js": {
+      "get": {
+        "operationId": "getJavaScript",
+        "summary": "Inicialização do tema e interface.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo executado no head; aplicação adiada para DOMContentLoaded.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/style.css": {
+      "get": {
+        "operationId": "getStyles",
+        "summary": "Estilos locais com temas claro/escuro.",
+        "responses": {
+          "200": {
+            "description": "CSS externo.",
+            "content": {
+              "text/css": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Disponibilidade somente do app.",
+        "responses": {
+          "200": {
+            "description": "Não consulta Ollama.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "example": {
+                  "status": "ok"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/api/models": {
+      "get": {
+        "operationId": "getModels",
+        "summary": "Consulta modelos instalados e carregados.",
+        "responses": {
+          "200": {
+            "description": "Catálogo e carregados repassados do Ollama.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Falha acessando ou interpretando metadados do Ollama.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/api/state": {
+      "get": {
+        "operationId": "getState",
+        "summary": "Obtém snapshot global e resumo.",
+        "responses": {
+          "200": {
+            "description": "Estado compartilhado entre abas, sem jobId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/State"
+                },
+                "examples": {
+                  "idle": {
+                    "value": {
+                      "status": "idle",
+                      "rows": [],
+                      "settings": null,
+                      "current": null,
+                      "started_at": null,
+                      "error": null,
+                      "summary": []
+                    }
+                  },
+                  "completedIllustrative": {
+                    "summary": "Exemplo sintético, não medição nem nome de modelo instalado.",
+                    "value": {
+                      "status": "completed",
+                      "settings": {
+                        "models": [
+                          "example:small"
+                        ],
+                        "prompt": "Explique APIs REST.",
+                        "num_predict": 128,
+                        "num_ctx": 4096,
+                        "repetitions": 3,
+                        "timeout": 180,
+                        "think": false
+                      },
+                      "rows": [
+                        {
+                          "model": "example:small",
+                          "run": 1,
+                          "phase": "initial",
+                          "status": "completed",
+                          "loaded_before": false,
+                          "tokens": 128,
+                          "tokens_per_s": 8.0,
+                          "first_content_s": 2.1,
+                          "first_text_s": 2.1,
+                          "wall_s": 18.0,
+                          "total_s": 17.9,
+                          "load_s": 1.5,
+                          "prompt_tokens": 20,
+                          "prompt_cached_tokens": null,
+                          "prompt_s": 0.4,
+                          "generation_s": 16.0,
+                          "done_reason": "length",
+                          "response": "Resposta ilustrativa.",
+                          "size_vram": 3000000000,
+                          "size_memory": 3100000000
+                        },
+                        {
+                          "model": "example:small",
+                          "run": 2,
+                          "phase": "repeated",
+                          "status": "completed",
+                          "loaded_before": true,
+                          "tokens": 128,
+                          "tokens_per_s": 8.0,
+                          "first_content_s": 2.1,
+                          "first_text_s": 2.1,
+                          "wall_s": 18.0,
+                          "total_s": 17.9,
+                          "load_s": 1.5,
+                          "prompt_tokens": 20,
+                          "prompt_cached_tokens": null,
+                          "prompt_s": 0.4,
+                          "generation_s": 16.0,
+                          "done_reason": "length",
+                          "response": "Resposta ilustrativa.",
+                          "size_vram": 3000000000,
+                          "size_memory": 3100000000
+                        },
+                        {
+                          "model": "example:small",
+                          "run": 3,
+                          "phase": "repeated",
+                          "status": "completed",
+                          "loaded_before": true,
+                          "tokens": 128,
+                          "tokens_per_s": 8.0,
+                          "first_content_s": 2.1,
+                          "first_text_s": 2.1,
+                          "wall_s": 18.0,
+                          "total_s": 17.9,
+                          "load_s": 1.5,
+                          "prompt_tokens": 20,
+                          "prompt_cached_tokens": null,
+                          "prompt_s": 0.4,
+                          "generation_s": 16.0,
+                          "done_reason": "length",
+                          "response": "Resposta ilustrativa.",
+                          "size_vram": 3000000000,
+                          "size_memory": 3100000000
+                        }
+                      ],
+                      "current": null,
+                      "started_at": "2026-10-28T12:00:00+00:00",
+                      "error": null,
+                      "summary": [
+                        {
+                          "model": "example:small",
+                          "initial": {
+                            "model": "example:small",
+                            "run": 1,
+                            "phase": "initial",
+                            "status": "completed",
+                            "loaded_before": false,
+                            "tokens": 128,
+                            "tokens_per_s": 8.0,
+                            "first_content_s": 2.1,
+                            "first_text_s": 2.1,
+                            "wall_s": 18.0,
+                            "total_s": 17.9,
+                            "load_s": 1.5,
+                            "prompt_tokens": 20,
+                            "prompt_cached_tokens": null,
+                            "prompt_s": 0.4,
+                            "generation_s": 16.0,
+                            "done_reason": "length",
+                            "response": "Resposta ilustrativa.",
+                            "size_vram": 3000000000,
+                            "size_memory": 3100000000
+                          },
+                          "repeated_count": 2,
+                          "tokens_per_s": 8.0,
+                          "first_text_s": 2.1,
+                          "wall_s": 18.0
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/api/export": {
+      "get": {
+        "operationId": "exportResults",
+        "summary": "Exporta snapshot atual em CSV ou JSON.",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "json"
+            },
+            "description": "Somente valor exato csv seleciona CSV; qualquer outro valor seleciona JSON; primeiro valor se repetido."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Anexo; nome fixo conforme formato. Pode exportar estado parcial durante execução.",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "attachment; filename=\"ollama-benchmark.json\" ou ollama-benchmark.csv"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/State"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "description": "UTF-8 BOM. Cabeçalhos e semântica na especificação técnica."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/start": {
+      "post": {
+        "operationId": "startBenchmark",
+        "summary": "Aceita e inicia comparação sequencial.",
+        "description": "202 não confirma existência/capacidade do modelo; falhas assíncronas aparecem no estado. Novo job substitui resultados anteriores. Header X-Benchmark-Token vem de GET /. Content-Length obrigatório, corpo máximo65536bytes, sem Transfer-Encoding. POST não aceita query no caminho.",
+        "security": [
+          {
+            "PageToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRequest"
+              },
+              "example": {
+                "models": [
+                  "example:small"
+                ],
+                "prompt": "Explique APIs REST.",
+                "num_predict": 128,
+                "num_ctx": 4096,
+                "repetitions": 3,
+                "timeout": 180,
+                "think": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Worker aceito.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartAccepted"
+                },
+                "example": {
+                  "status": "running"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já há job running ou cancelling.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, tamanho textual ou configuração inválida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caminho POST com query ou caminho desconhecido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Timeout tratado lendo corpo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content-Length ausente, negativo ou acima de 65536.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type não JSON ou Transfer-Encoding não vazio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    },
+    "/api/cancel": {
+      "post": {
+        "operationId": "cancelBenchmark",
+        "summary": "Sinaliza cancelamento da fila e tenta interromper a conexão.",
+        "description": "Aceita qualquer JSON válido (inclusive null, array ou escalar); o conteúdo é ignorado. Exige token e proteções POST. Sem garantia de liberação imediata da GPU. Estado devolvido pode já ser terminal.",
+        "security": [
+          {
+            "PageToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {},
+              "example": {}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado atual após sinalização.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                },
+                "example": {
+                  "status": "cancelling"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, tamanho textual ou configuração inválida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caminho POST com query ou caminho desconhecido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Timeout tratado lendo corpo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content-Length ausente, negativo ou acima de 65536.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type não JSON ou Transfer-Encoding não vazio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "PageToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Benchmark-Token",
+        "description": "Token da instância obtido no HTML GET /. Não representa conta/sessão individual."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StartRequest": {
+        "type": "object",
+        "required": [
+          "models",
+          "prompt"
+        ],
+        "properties": {
+          "models": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S"
+            },
+            "description": "Limite aplicado antes de deduplicar. Deduplicação preserva ordem; nomes não são aparados."
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000,
+            "pattern": "\\S"
+          },
+          "num_predict": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096,
+            "default": 128,
+            "x-python-type": "int (não aceita float 128.0)"
+          },
+          "num_ctx": {
+            "type": "integer",
+            "minimum": 512,
+            "maximum": 131072,
+            "default": 4096,
+            "x-python-type": "int"
+          },
+          "repetitions": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 10,
+            "default": 3,
+            "x-python-type": "int",
+            "description": "Inclui primeira chamada."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 1800,
+            "default": 180,
+            "x-python-type": "int",
+            "description": "Deadline em segundos da geração; exclui GETs de metadados."
+          },
+          "think": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": true,
+        "description": "Campos extras são ignorados. Exemplo ilustrativo; substitua pelo nome de modelo instalado."
+      },
+      "Settings": {
+        "type": "object",
+        "required": [
+          "models",
+          "prompt",
+          "num_predict",
+          "num_ctx",
+          "repetitions",
+          "timeout",
+          "think"
+        ],
+        "properties": {
+          "models": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S"
+            },
+            "description": "Limite aplicado antes de deduplicar. Deduplicação preserva ordem; nomes não são aparados."
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000,
+            "pattern": "\\S"
+          },
+          "num_predict": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096,
+            "default": 128,
+            "x-python-type": "int (não aceita float 128.0)"
+          },
+          "num_ctx": {
+            "type": "integer",
+            "minimum": 512,
+            "maximum": 131072,
+            "default": 4096,
+            "x-python-type": "int"
+          },
+          "repetitions": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 10,
+            "default": 3,
+            "x-python-type": "int",
+            "description": "Inclui primeira chamada."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 1800,
+            "default": 180,
+            "x-python-type": "int",
+            "description": "Deadline em segundos da geração; exclui GETs de metadados."
+          },
+          "think": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "Row": {
+        "type": "object",
+        "required": [
+          "model",
+          "run",
+          "phase",
+          "status"
+        ],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "run": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "initial",
+              "repeated"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "loaded_before": {
+            "type": "boolean"
+          },
+          "tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tokens_per_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "eval_count / eval_duration * 1e9; null se duração não positiva ou tokens zero."
+          },
+          "first_content_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Relógio cliente: primeiro response ou thinking não vazio."
+          },
+          "first_text_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Relógio cliente: primeiro response não vazio."
+          },
+          "wall_s": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Duração local da geração; exclui GETs de metadados."
+          },
+          "total_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "load_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prompt_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "generation_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prompt_tokens": {
+            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+          },
+          "prompt_cached_tokens": {
+            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+          },
+          "done_reason": {
+            "description": "Copiado sem revalidação; normalmente string. Default unknown se ausente."
+          },
+          "response": {
+            "type": "string",
+            "maxLength": 64000
+          },
+          "size_vram": {
+            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+          },
+          "size_memory": {
+            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+          },
+          "warning": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Campos métricos estão presentes no sucesso; falha/cancelamento podem trazer só campos-base, loaded_before e error. Campos de memória/warning são opcionais."
+      },
+      "Summary": {
+        "type": "object",
+        "required": [
+          "model",
+          "initial",
+          "repeated_count",
+          "tokens_per_s",
+          "first_text_s",
+          "wall_s"
+        ],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "initial": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Row"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "repeated_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tokens_per_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "first_text_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "wall_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Mediana por métrica dos valores numéricos disponíveis em linhas completed run>1. repeated_count não exige velocidade disponível."
+      },
+      "State": {
+        "type": "object",
+        "required": [
+          "status",
+          "settings",
+          "rows",
+          "current",
+          "started_at",
+          "error",
+          "summary"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "running",
+              "cancelling",
+              "completed",
+              "cancelled",
+              "failed"
+            ],
+            "description": "completed significa fila percorrida, mesmo se todas as linhas falharam."
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Settings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Row"
+            }
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "model",
+                  "run"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string"
+                  },
+                  "run": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Summary"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ModelsResponse": {
+        "type": "object",
+        "required": [
+          "models",
+          "loaded",
+          "ollama_url"
+        ],
+        "properties": {
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Item repassado de /api/tags; UI espera name, size e details.quantization_level."
+            }
+          },
+          "loaded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Item repassado de /api/ps."
+            }
+          },
+          "ollama_url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StartAccepted": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "const": "running"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CancelResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "running",
+              "cancelling",
+              "completed",
+              "cancelled",
+              "failed"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

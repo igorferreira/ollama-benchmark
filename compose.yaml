@@ -1,0 +1,15 @@
+services:
+  benchmark:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      APP_BIND: 0.0.0.0
+      OLLAMA_URL: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

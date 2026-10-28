@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local benchmark exports may contain prompts, generated text and machine details.
+test-results/
+TEST_RESULTS.md
+PUBLICATION_AUDIT.local.md
+
+# Credentials and machine-specific configuration never belong in the repository.
+.env
+.env.*
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+.secrets*
+*.local.*
+*.log
+.DS_Store
+Thumbs.db
