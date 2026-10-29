@@ -48,7 +48,7 @@ Storage bloqueado não impede a troca visual; a preferência permanece apenas na
 
 **Cancelar teste** sinaliza o worker e tenta fechar o socket da geração atual. Não é garantia de liberação imediata da GPU pelo Ollama. Cancelamento durante consultas de metadados não possui watchdog global equivalente ao da inferência.
 
-Depois que o estado deixar `running/cancelling`, outro teste pode começar. Texto parcial da execução cancelada não é exportado. Resultados concluídos antes do cancelamento continuam disponíveis até novo job/reinício.
+Depois que o estado deixar `running/cancelling`, outro teste pode começar. A última prévia incompleta pode permanecer no estado ao vivo e na exportação JSON; a linha cancelada não recebe contagem final inventada. O CSV não contém a prévia. Resultados concluídos antes do cancelamento continuam disponíveis até novo job/reinício.
 
 Não há recuperação após fechar o processo. Os arquivos de exportação são o mecanismo de preservação manual; não existe importação desses arquivos pelo app.
 
@@ -125,3 +125,23 @@ Para relatar bug, inclua versão do Python/SO/Ollama/Docker quando pertinente, m
 - Atualize código/arquivos e valide suíte; no Docker, reconstrua imagem.
 - Abra a UI, confirme conexão/modelos e teste primeiro com saída curta.
 - Mantenha mudanças de Ollama, firewall e drivers fora de uma atualização rotineira deste app.
+
+## 8. Acompanhamento ao vivo e conceitos
+
+O painel ao vivo mostra apenas testes iniciados neste app. Prévia, caracteres, fragmentos e cronômetro indicam atividade; fragmentos não equivalem a tokens. Tokens finais de entrada/saída/cache/total aguardam a estatística do Ollama. O acumulado soma somente execuções completed e não representa cobrança de terceiros.
+
+A opção **Contar tokens de saída ao vivo (instrumentado)** começa desligada. Ao ligar, o app solicita metadata logprobs por token; se compatível, mostra contagem observada provisória. Metadata ausente/malformada deixa esse contador indisponível, sem estimativa ou retry. Ao fim, a conferência compara com eval_count e o contador final prevalece. A opção pode alterar throughput/latência; compare sempre modos equivalentes.
+
+Use o link de FAQ no cabeçalho para explicações e exemplos educativos de cobrança/latência. Passe o mouse, use foco/Enter ou toque nos botões de ajuda; Escape fecha a explicação. A FAQ não depende do Ollama ligado e fica disponível offline depois de instalada no cache público da PWA. A página principal continua exigindo servidor e token novo; não é guardada offline.
+
+Se a opção instrumentada for rejeitada, a linha registra o erro e as anteriores permanecem; desative a opção para outro teste somente por decisão explícita. Não há reenvio silencioso que duplique a inferência.
+
+## 9. Resumo do ambiente e detalhes
+
+A faixa no topo é dinâmica para o backend atual. Use Ver detalhes por mouse, foco ou toque; Escape e Fechar recolhem o painel sem prender a navegação. Clique mantém o painel aberto; sair com o ponteiro fecha quando não estiver fixado e não houver foco dentro. Nomes completos permanecem nos detalhes, mesmo quando o resumo abrevia prefixos redundantes para caber melhor.
+
+Atualizar respeita intervalo mínimo de dez segundos. Durante benchmark, o botão/polling são pausados e o backend devolve o snapshot anterior como pausado; não interpretar o timestamp antigo como leitura instantânea. Fonte indisponível mantém Não informado. Não há inventário nas exportações do benchmark ou no cache PWA.
+
+No Docker, capacidade total de RAM pode ser desconhecida se o limite não estiver comprovável; GPU sem dispositivo/nome exposto não significa ausência de GPU física. CPU/kernel podem ser compartilhados, disco é o agregado do sistema de arquivos do app e o ambiente não identifica automaticamente o alvo Ollama. Não habilite privilégios/mounts sensíveis/Docker socket apenas para preencher campos.
+
+Se a rota responder 503, confirme execução pela entrada app.py com coletor composto; fixtures/servidores personalizados sem coletor não fazem descoberta automaticamente. Erros são genéricos para não expor caminhos privados. Não publique capturas reais sem avaliar fingerprint; use exemplos sintéticos para relatar problemas.

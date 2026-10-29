@@ -4,7 +4,7 @@ Aplicação web local para medir o desempenho do Ollama em Windows e Linux. Usa 
 
 ## Documentação de manutenção
 
-A [documentação SDD completa](docs/README.md) reúne requisitos e BDD, arquitetura C4 e ADRs, especificação técnica/OpenAPI, rastreabilidade, operação, desenvolvimento e revisão SOLID.
+A [documentação SDD completa](docs/README.md) reúne requisitos e BDD, arquitetura C4 e ADRs, especificação técnica/OpenAPI, rastreabilidade, operação, desenvolvimento e revisão SOLID. O [backlog](docs/backlog.md) registra a validação Windows/Docker Desktop ainda pendente (TASK-WIN-01).
 
 O seletor **Tema** no topo permite **Claro** ou **Escuro**. Sem preferência salva, acompanha o sistema. A escolha é persistida no navegador quando o armazenamento está disponível; storage bloqueado não impede a troca visual.
 
@@ -14,7 +14,7 @@ O ícone original combina um velocímetro e uma lhama estilizada. Abra **http://
 
 Mantenha o mesmo endereço e porta: `localhost` e `127.0.0.1` são origens distintas. A PWA não instala Python/Ollama nem inicia os servidores automaticamente. Com o servidor parado, mostra uma página explicativa offline; medições exigem o app e o Ollama em execução.
 
-O service worker guarda somente oito recursos públicos de uma lista explícita: página offline, CSS, manifesto e ícones. **Não guarda a página principal com token, APIs, prompts, respostas ou exportações.** Limpar os dados do site remove o cache e a preferência de tema. Não há dependências Python adicionais.
+O service worker guarda somente recursos públicos de uma lista explícita: página offline, FAQ, script de ajuda/tema, CSS, manifesto e ícones. **Não guarda a página principal com token, APIs, prompts, respostas ou exportações.** Limpar os dados do site remove o cache e a preferência de tema. Não há dependências Python adicionais.
 
 ## Requisitos
 
@@ -53,7 +53,7 @@ O processo precisa continuar aberto. Para encerrar, pressione **Ctrl+C**. Os res
 ## Como usar
 
 1. Confira a conexão e selecione um ou vários modelos instalados.
-2. Edite o prompt se necessário. Use o mesmo pedido para todos os modelos.
+2. Edite o prompt ou abra **Biblioteca de pedidos** para escolher entre 18 exemplos de código/não código, filtrados por complexidade. A prévia só troca o texto ao clicar **Usar pedido**; edições exigem confirmação. Selecionar não inicia teste nem muda limites/modelos. Use o mesmo pedido para todos os modelos.
 3. Defina o limite de saída, contexto, execuções e timeout. O padrão é 128 tokens, contexto 4.096, três execuções e 180 segundos por execução.
 4. Clique em **Iniciar comparação**. O app executa os modelos e repetições sequencialmente.
 5. Veja o progresso, resultados individuais e resumo. Exporte CSV ou JSON para guardar.
@@ -63,6 +63,22 @@ A primeira chamada aparece separada das demais. O resumo usa a mediana das execu
 **Cancelar teste** impede próximas execuções e tenta interromper a conexão atual. Isso não garante que o Ollama libere a GPU imediatamente. Consultas de metadados podem levar até cinco segundos para expirar.
 
 Se o modelo não suportar geração ou rejeitar a opção de raciocínio, a execução registra o erro retornado. Uma falha não apaga os resultados anteriores. Nenhum download automático será iniciado.
+
+## Resumo dinâmico do ambiente
+
+O topo apresenta uma faixa compacta de SO, CPU, GPU e RAM com **Ver detalhes**, timestamp e atualização. Os dados vêm do ambiente atual do backend, nunca de um inventário de exemplo; valores indisponíveis aparecem como **Não informado**. O painel funciona com mouse, teclado e toque, nos temas claro/escuro.
+
+No Docker, o rótulo distingue o container: CPU/kernel podem ser compartilhados, memória respeita o escopo conhecido e GPU não exposta não significa ausência física. O resumo não identifica automaticamente o host nem a GPU usada pelo Ollama. Disco significa o sistema de arquivos do app, não todos os discos físicos.
+
+O snapshot fica somente em memória e fora das exportações/cache PWA. Atualização dinâmica limitada a dez segundos, pausada durante benchmarks. O app não exige neofetch/fastfetch, administrador ou pacotes Python adicionais.
+
+## Acompanhamento ao vivo e FAQ
+
+Durante cada teste do app, acompanhe a prévia da resposta, tempo decorrido, primeiro conteúdo/texto e quantidade de caracteres/fragmentos recebidos. **Fragmentos não são tokens.** O Ollama normalmente entrega as estatísticas completas no fim; até lá, os tokens exatos aparecem como aguardando medição final. A opção **Contar tokens de saída ao vivo (instrumentado)** usa metadados opcionais `logprobs` quando o Ollama/modelo os fornece, com conferência pelo contador final. Ela começa desligada e pode alterar o desempenho do teste; compare modos equivalentes. Sem metadata válida, a contagem observada fica indisponível. Não há estimativa por caracteres nem monitoramento de outros aplicativos Ollama.
+
+Ao terminar, a interface mostra entrada, saída, cache e total informado (entrada + saída, sem somar cache novamente), além do acumulado somente das execuções concluídas. Falhas/cancelamentos ou contadores ausentes não representam uso faturável zero. O app não calcula fatura ou tarifa de provedor.
+
+O link **Conceitos e FAQ** abre uma página estática com definições, exemplos de custo, interpretação de latência e limites. Ajuda breve nos controles funciona por mouse, teclado e toque. A FAQ fica disponível offline depois de armazenada pela PWA; o benchmark continua exigindo os servidores locais.
 
 ## Métricas
 
@@ -166,3 +182,5 @@ A interface valida `Host` e `Origin`, exige JSON e token de sessão para operaç
 - `Dockerfile`, `compose.yaml`, `compose.linux.yaml`: execução opcional em container.
 
 Documentação de referência consultada via Context7: [API do Ollama](https://github.com/ollama/ollama/blob/main/docs/api.md) e [Docker Compose](https://github.com/docker/compose).
+
+A complexidade dos exemplos é editorial, não prevê tokens/custo/tempo. Exemplos longos podem exigir maior limite de saída, ajustado manualmente. O guia de tokens, tempos e custos está logo abaixo do nome do app. Nos detalhes do ambiente, hostname identifica apenas a máquina/container onde este backend executa: nome local volátil, sem consulta DNS, separado das exportações e do cache. Evite compartilhar capturas com identificadores locais.

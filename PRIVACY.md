@@ -7,14 +7,15 @@ Este app mede o desempenho do Ollama com prompts fornecidos pela pessoa usuária
 | Dado | Finalidade e destino | Permanência e controle |
 | --- | --- | --- |
 | Prompt e parâmetros | Navegador → backend Python → Ollama configurado; usados para gerar a resposta e medir o teste | Formulário do navegador e estado em memória do processo. Iniciar outra comparação substitui o estado ativo do backend; encerrar o processo libera seu estado operacional |
-| Texto gerado, métricas, modelo e mensagens de erro | Ollama → backend → navegador; apresentação e comparação dos resultados | Estado em memória do backend; a resposta preservada tem limite de 64 mil caracteres por execução. Outras abas da mesma instância acessam o mesmo estado |
-| Exportação CSV/JSON | Download solicitado pela pessoa usuária | Arquivo em texto legível, sob controle do navegador/sistema operacional. Pode conter prompt, resposta e erros. Não é apagado quando o app reinicia |
+| Texto gerado, prévia ao vivo, métricas, modelo e mensagens de erro | Ollama → backend → navegador; apresentação e comparação dos resultados | Estado em memória do backend; a resposta preservada tem limite de 64 mil caracteres por execução. Outras abas da mesma instância acessam o mesmo estado. A prévia da tentativa mais recente pode permanecer após erro/cancelamento até a próxima tentativa/job ou encerramento; não é gravada automaticamente em disco |
+| Exportação CSV/JSON | Download solicitado pela pessoa usuária | Arquivo em texto legível, sob controle do navegador/sistema operacional. Pode conter prompt, resposta e erros; o JSON inclui também o snapshot de prévia ao vivo, inclusive uma tentativa incompleta. O CSV não inclui texto da prévia. Não é apagado quando o app reinicia |
 | Preferência de tema | Armazenamento local do navegador, chave `ollama-benchmark-theme` | Somente `light` ou `dark`. Persiste por origem até limpar os dados do site; não armazena prompt, credencial ou identificador de usuário |
 | Token de proteção da página | Memória do backend e página entregue ao navegador; protege operações POST | Gerado por inicialização, sem armazenamento persistente implementado. Não é uma senha nem uma chave de API do Ollama |
+| Resumo do ambiente do backend | SO/kernel/arquitetura, modelo de CPU/GPU, memória, agregado do sistema de arquivos do app e uptime, quando disponíveis; apresentação local em endpoint separado | Fatos estáticos em memória por instância e snapshot dinâmico limitado a dez segundos. Pausa durante benchmark. Não integra estado/exportações do teste, Cache Storage, localStorage ou gravação automática em disco |
 
 O backend não implementa histórico em banco, gravação automática de prompts/resultados, analytics ou telemetria. As mensagens de acesso HTTP estão desabilitadas. O código não implementa logs intencionais de payloads; configurações do sistema, ferramentas de diagnóstico e serviços externos continuam fora desse controle.
 
-A instalação PWA adiciona registro de service worker, manifesto e Cache Storage no navegador. O cache guarda somente a página offline, CSS, manifesto e ícones de uma lista explícita. Nunca guarda a página principal com token, APIs, prompts, respostas ou exportações. Os recursos públicos persistem até limpar os dados do site.
+A instalação PWA adiciona registro de service worker, manifesto e Cache Storage no navegador. O cache guarda somente a página offline, FAQ, script público de ajuda/tema, CSS, manifesto e ícones de uma lista explícita. Nunca guarda a página principal com token, APIs, prompts, respostas, prévias ao vivo ou exportações. A FAQ não consulta a API nem recebe dados de teste; links de referência externos só abrem por ação da pessoa usuária. Os recursos públicos persistem até limpar os dados do site.
 
 ## Limites da execução local
 
@@ -46,3 +47,21 @@ Esta avaliação documenta medidas técnicas e limitações. Publicar o código 
 6. Não anexe prompts privados, senhas, chaves ou exportações pessoais a issues, commits ou relatórios públicos.
 
 Os arquivos `test-results/`, `TEST_RESULTS.md` e relatórios `*.local.*` são evidências privadas do ambiente de desenvolvimento, excluídas do Git. Regras de ignore e scanners ajudam a prevenir publicação acidental, mas cada novo arquivo precisa de revisão.
+
+## Resumo dinâmico e fingerprint
+
+A SDD-004 acrescenta um inventário mínimo do ambiente onde o processo Python executa. Combinar hardware/software pode criar fingerprint; esses campos não devem ser tratados como dados universalmente anônimos. A finalidade é contextualizar a medição local, não identificar pessoas ou monitorar todo o computador.
+
+O coletor não consulta ou apresenta username, IP/MAC, serial, UUID, nomes de discos/volumes, caminhos de montagem, diretório pessoal, nomes de arquivos ou lista de pacotes. Retorna somente campos técnicos previstos, com limites e indisponibilidade explícita. Leituras e uso de APIs do sistema são locais, sem telemetria, comandos arbitrários ou inventário remoto.
+
+Por solicitação explícita (SDD-006), a exceção é o hostname: nome técnico local obtido uma vez por instância por `socket.gethostname()`, sem DNS. Aparece somente nos detalhes locais; pode identificar a máquina e merece cuidado ao compartilhar capturas. Em container é o nome do container/namespace, não do host físico. Não entra em logs, exportações, cache ou localStorage.
+
+No Docker, o resumo pertence ao processo/container: SO pode vir da imagem e CPU/kernel podem ser compartilhados. Memória é apresentada no escopo comprovável; host inacessível ou dispositivo não exposto não vira hardware inventado. O alvo Ollama pode ser outro ambiente, e modelo de GPU não comprova uso pelo Ollama.
+
+O endpoint `/api/system` é separado, com `no-store` e proteções locais. Inventário fica fora dos snapshots/exportações do benchmark e da allowlist PWA. Valores dinâmicos têm timestamp; durante teste ativo, usa-se o snapshot anterior marcado como pausado em vez de coletar novamente. O resumo permanece somente na memória do processo e no DOM da página; encerramento não é promessa de apagamento seguro de RAM/swap/dumps.
+
+Fixtures, documentação e capturas públicas não devem conter inventário pessoal real. A implementação não habilita DE/WM/tema do desktop/fontes/shell/pacotes por conveniência: são informações dispensáveis ao objetivo mínimo desta entrega.
+
+## Biblioteca de pedidos
+
+A biblioteca contém apenas 18 exemplos genéricos públicos, incluídos no JavaScript local. Não consulta Ollama, não guarda escolhas e só preenche o textarea por ação explícita, com confirmação antes de substituir edição. Ao executar uma comparação, o pedido escolhido segue o fluxo normal de benchmark e exportação descrito acima.

@@ -100,7 +100,7 @@ O termo **deve** descreve o comportamento da baseline ou um critério para prese
 | RF-02 | A pessoa usuária deve selecionar modelos e fornecer parâmetros válidos antes de iniciar a comparação. | Limites e tipos estão na especificação técnica; o backend revalida entradas. |
 | RF-03 | O app deve executar os modelos selecionados e suas repetições de forma sequencial, mantendo o mesmo pedido e os mesmos parâmetros de geração. | A ordem dos modelos é preservada após remover duplicatas; cada modelo inicia sua numeração em 1. |
 | RF-04 | Cada execução concluída deve registrar contagem de tokens, tokens/s, primeiro conteúdo, primeiro texto, total medido e durações fornecidas pelo Ollama. | Valores ausentes ou inválidos podem resultar em `null`; a contagem de saída precisa ser válida. |
-| RF-05 | A interface deve apresentar estado global, execução atual, quantidade de registros finalizados, tabela individual e texto/erro registrado. | A atualização é por consulta periódica; não é exibição incremental token a token. |
+| RF-05 | A interface deve apresentar estado global, execução atual, quantidade de registros finalizados, tabela individual e texto/erro registrado. | A atualização é por consulta periódica. SDD-003 acrescenta prévia de texto ao vivo; isso não equivale a contagem exata token a token. |
 | RF-06 | O app deve separar a primeira chamada e resumir chamadas de número maior que 1, usando apenas execuções concluídas. | Cada métrica do resumo usa a mediana dos seus valores numéricos disponíveis. |
 | RF-07 | A pessoa usuária deve poder solicitar cancelamento de um teste em andamento. | O app impede novas inferências da fila e tenta interromper a conexão atual; não garante liberação imediata de recursos do Ollama. |
 | RF-08 | Falhas individuais devem ser registradas sem apagar resultados anteriores; falhas globais devem ter estado e mensagem próprios. | Encerramento global `completed` pode conter linhas `failed`; significa que a fila foi percorrida. |
@@ -109,8 +109,17 @@ O termo **deve** descreve o comportamento da baseline ou um critério para prese
 | RF-11 | O app deve registrar se o modelo estava carregado antes da chamada e obter informações de memória após uma execução concluída quando disponíveis. | Falha na consulta posterior de memória preserva a medição e gera aviso no JSON. |
 | RF-12 | A pessoa usuária deve poder habilitar ou desabilitar raciocínio no pedido de benchmark. | A aceitação dessa opção e seu efeito dependem do modelo/Ollama; rejeições são erros individuais, sem adaptação automática. |
 | RF-13 | A pessoa usuária deve poder escolher visualmente um tema claro ou escuro; o app deve manter a preferência local quando o armazenamento estiver disponível e usar o tema do sistema na ausência de preferência salva. | Extensão implementada nesta rodada, separada da baseline anterior, com validação de navegador registrada na rastreabilidade. Falha de acesso ao armazenamento não pode impedir a interface ou a escolha na página atual. |
-
 | RF-14 | A pessoa usuária deve poder instalar a aplicação local como PWA nos navegadores compatíveis, com ícone próprio, manifesto e tela offline explicativa. | Service worker guarda somente assets públicos; servidor Python e Ollama continuam necessários. Instalação gráfica Windows não validada. Ver SDD-002. |
+| RF-15 | Acompanhar a tentativa do próprio app ao vivo, com texto parcial, tempo, primeiros tempos, caracteres e fragmentos. | Fragmentos/caracteres não são tokens; contadores finais aguardam done. A opção instrumentada observa saída via logprobs e confere no fim. Ver SDD-003. |
+| RF-16 | Mostrar tokens finais de entrada, saída e cache, soma entrada+saída quando válida e acumulado das execuções concluídas. | Cache não é somado novamente; falhas/cancelamentos e dados ausentes não representam uma fatura zero. |
+| RF-17 | Oferecer FAQ estática sobre tokens, desempenho, custo e limites, com link visível e consulta offline após cache público. | FAQ não lê APIs nem recebe token, prompts ou resultados. Links externos são referências, sem carregamento automático. |
+| RF-18 | Oferecer explicações breves acessíveis por mouse, foco e toque. | Ajuda não substitui rótulos; mantém CSP, temas e acesso por teclado. |
+| RF-19 | Mostrar resumo dinâmico do ambiente atual do backend, com SO/CPU/GPU/RAM e origem inequívoca. | Campos desconhecidos não viram zero ou valores do exemplo; container não é tratado como inventário do host/Ollama. Ver SDD-004. |
+| RF-20 | Abrir detalhes acessíveis e apresentar snapshot com timestamp, atualização limitada e pausa durante benchmark. | Hover, foco, toque, botão e Escape; sem prender foco ou guardar inventário nas exportações/cache. |
+
+| RF-21 | Oferecer 18 exemplos locais com tipo/complexidade, filtros e prévia integral. | Três por célula; classificação editorial, sem promessa de custo ou qualidade. Ver SDD-005. |
+| RF-22 | Aplicar exemplo somente por Usar pedido, com confirmação de edição existente e bloqueio durante teste. | Navegação/fechamento preservam textarea e parâmetros; não inicia inferência. |
+| RF-23 | Exibir hostname dinâmico local nos detalhes e destacar guia sob a marca. | Exceção autorizada à minimização: volátil, sem DNS ou dados pessoais versionados. Ver SDD-006. |
 
 ## 6. Requisitos não funcionais
 
@@ -123,6 +132,7 @@ O termo **deve** descreve o comportamento da baseline ou um critério para prese
 | RNF-05 | Consistência do estado | Apenas um teste pode estar ativo por processo. A finalização deve publicar estado terminal e limpeza da execução atual de forma consistente, permitindo novo teste após o encerramento. |
 | RNF-06 | Interface utilizável | Controles possuem rótulos, progresso/erro têm semântica de estado/alerta e tabelas largas têm rolagem própria. A extensão de tema deve preservar legibilidade, distinção dos controles e foco visível nas duas alternativas. Há evidência de layout em três tamanhos de viewport e validação dos dois temas nesta rodada, sem certificação formal de acessibilidade. |
 | RNF-07 | Portabilidade explicitada | O projeto deve manter caminhos e recursos compatíveis com execução nativa em Windows e Linux. A baseline foi executada em Linux; Windows e Docker Desktop permanecem não verificados. |
+| RNF-08 | Minimização do inventário | Coleta técnica limitada, local e volátil; sem identificadores proibidos, dependências adicionais ou dados de inventário nas exportações/cache. Atualização dinâmica limitada a dez segundos e pausada durante teste ativo. |
 
 ## 7. Regras de negócio e interpretação
 
@@ -245,6 +255,38 @@ O seletor apresenta somente **Claro** e **Escuro**. Não há opção explícita 
 - **Dado** cada uma das alternativas de tema, **quando** eu usar formulário, seletor, botões, resultados e navegação por teclado, **então** os textos e controles permanecerão distinguíveis e o foco permanecerá visível.
 - **Dado** a extensão implementada, **quando** sua revisão conferir os recursos carregados, **então** ela não exigirá dependências externas nem manipuladores de evento inline no HTML.
 
+### US-10 — Instalar a ferramenta local
+
+Requisito: RF-14. Critérios e evidências estão em [SDD-002](changes/002-pwa-icone.md).
+
+- **Dado** um navegador compatível, **quando** eu instalar a PWA, **então** ela usará ícone e janela próprios sem dispensar os servidores locais.
+- **Dado** o cache público instalado, **quando** o app estiver indisponível, **então** a página offline explicará como iniciar o servidor sem recuperar API ou HTML antigo com token.
+
+### US-11 — Acompanhar geração sem contagem inventada
+
+Requisitos: RF-15/RF-16.
+
+- **Dado** fragmentos antes do resultado final, **quando** eu acompanhar a execução, **então** verei texto parcial, fragmentos, caracteres e tempo, com tokens exatos aguardando estatística.
+- **Dado** contadores finais válidos, **quando** a tentativa terminar, **então** entrada e saída serão somadas, cache ficará separado e o acumulado incluirá somente tentativas concluídas.
+- **Dado** erro ou cancelamento depois de texto parcial, **quando** a tentativa encerrar, **então** a prévia será marcada como incompleta, sem converter o texto em tokens ou custo conhecido.
+
+### US-12 — Entender conceitos e métricas
+
+Requisitos: RF-17/RF-18.
+
+- **Dado** o app aberto, **quando** eu acessar a FAQ, **então** poderei aprender os conceitos sem iniciar um teste ou consultar uma API.
+- **Dado** mouse, teclado ou toque, **quando** eu abrir uma ajuda breve, **então** o resumo permanecerá acessível sem substituir o rótulo do campo, e Escape permitirá fechá-lo.
+- **Dado** FAQ já armazenada no cache público, **quando** o servidor estiver indisponível, **então** a explicação continuará acessível sem dados de benchmark no cache.
+
+### US-13 — Contextualizar a medição com o ambiente real
+
+Requisitos: RF-19/RF-20 e RNF-08. Especificação prospectiva: [SDD-004](changes/004-resumo-ambiente-dinamico.md).
+
+- **Dado** uma nova instância em outra máquina, **quando** eu abrir o app, **então** o resumo refletirá o ambiente atual sem editar inventário ou recompilar para trocar valores.
+- **Dado** um container, **quando** eu abrir os detalhes, **então** verei origem/escopos explícitos e desconhecidos onde o host/dispositivo não estiver acessível, sem inferir GPU usada pelo Ollama.
+- **Dado** uma geração ativa, **quando** a interface solicitar atualização, **então** o snapshot anterior será marcado como pausado sem nova coleta dinâmica.
+- **Dado** teclado ou toque em tela pequena, **quando** eu abrir Ver detalhes, **então** o painel ficará dentro da viewport e poderá ser fechado com Escape mantendo navegação utilizável.
+
 ## 9. Fluxos de produto
 
 ### Fluxo principal
@@ -360,3 +402,13 @@ Uma alteração só estará pronta quando:
 7. **Sincronizar:** revisar a especificação final contra o comportamento entregue, atualizar rastreabilidade, instruções operacionais e limites conhecidos.
 
 IDs existentes não devem ser reutilizados para outro significado. Um requisito removido deve ser marcado como retirado, com justificativa e referência à alteração. Novos IDs continuam a sequência correspondente. Este processo não exige ferramenta adicional: os documentos Markdown, o código e os testes do projeto constituem os artefatos de trabalho.
+
+## Extensões SDD-005 e SDD-006
+
+### US-14 — Reutilizar um pedido de exemplo
+
+Requisitos RF-21/RF-22. Dado um pedido editado, quando eu filtrar, selecionar ou cancelar na biblioteca, então ele permanece intacto. Somente Usar pedido com confirmação exigida substitui o texto. Durante benchmark a ação é bloqueada; parâmetros e execução permanecem sob controle explícito.
+
+### US-15 — Reconhecer o ambiente e encontrar o guia
+
+Requisito RF-23. Dado o resumo da instância atual, quando abrir detalhes, então vejo hostname da máquina ou container, ou Não informado em falha. Não é hostname do alvo Ollama nem descoberta remota. O guia fica abaixo da marca, antes do resumo.

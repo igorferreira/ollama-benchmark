@@ -101,7 +101,7 @@ A separação introduz fronteiras de módulos por motivos de mudança; não tran
 
 O seletor **Tema** no cabeçalho oferece **Claro** e **Escuro**. Esse recurso pertence somente ao cliente web: não acrescenta endpoints, campos no estado Python ou parâmetros enviados ao Ollama.
 
-A página carrega `/app.js` como script externo síncrono no `<head>`, antes de `/style.css`. Uma IIFE lê a preferência e define `document.documentElement.dataset.theme` antes de a página completar o carregamento. A intenção é aplicar a escolha antes da primeira renderização completa; não se promete ausência de transição visual em qualquer navegador ou condição de rede. O restante da aplicação, incluindo controles, catálogo e polling, aguarda `DOMContentLoaded`.
+Na SDD-003, a inicialização de tema foi extraída para `/help.js`, compartilhado com a FAQ. A página carrega `/help.js` como script externo síncrono no `<head>`, antes de `/style.css`. Uma IIFE nesse script público lê a preferência e define `document.documentElement.dataset.theme` antes de a página completar o carregamento. A intenção é aplicar a escolha antes da primeira renderização completa; não se promete ausência de transição visual em qualquer navegador ou condição de rede. O restante da aplicação, incluindo controles, catálogo e polling, aguarda `DOMContentLoaded`.
 
 A precedência implementada é:
 
@@ -269,3 +269,62 @@ Não há log de acesso HTTP por requisição: `Handler.log_message` é suprimido
 - [ADR-005 — Separação de responsabilidades do backend](adr/005-separacao-responsabilidades-backend.md), sob demanda explícita e especificada antes do código.
 
 Mudanças em persistência, múltiplos usuários, execução paralela, destinos remotos, monitoramento de hardware ou frameworks alterariam decisões centrais. Devem partir de requisito e ADR novos, revisar o contrato técnico e a estratégia de testes antes de implementação. São possibilidades de evolução, não itens entregues ou automaticamente aprovados.
+
+## 14. Evolução SDD-003: progresso e ajuda pública
+
+O fluxo continua navegador → HTTP → manager → cliente Ollama. `OllamaClient.generate` recebe um callback opcional `progress`; a captura de TTFT continua próxima da leitura do stream. O callback publica apenas texto limitado, contagens e tempos, com throttle de 250 ms e publicação inicial/final garantida. `BenchmarkManager` atualiza `live` sob lock e deriva cronômetro monotônico no snapshot; `usage` é calculado das linhas completed. O polling existente da UI consome essas novas representações, sem SSE/WebSocket, thread de monitoramento ou observação de outros clientes.
+
+```mermaid
+sequenceDiagram
+    participant UI as Navegador
+    participant HTTP as Handler
+    participant Manager as BenchmarkManager
+    participant Client as OllamaClient
+    participant Ollama as Ollama local
+    Client->>Ollama: generate com stream (logprobs somente se opção ligada)
+    loop Fragmentos
+        Ollama-->>Client: response / thinking / metadata opcional
+        Client->>Manager: callback limitado: prévia, tempos e contadores observados
+        UI->>HTTP: GET /api/state
+        HTTP->>Manager: snapshot sob lock
+        Manager-->>UI: live e usage das concluídas
+    end
+    Ollama-->>Client: done e métricas finais
+    Client->>Manager: resultado final autoritativo + reconciliação
+    Manager-->>UI: linha, acumulado e prévia final no próximo polling
+```
+
+Instrumentação é opt-in (`live_token_count=false` por padrão). Ao ligar, o cliente pede `logprobs=true/top_logprobs=0` e conta entradas válidas, sem guardar probabilidades/bytes/conteúdo dos tokens. Qualquer conteúdo sem metadata válida invalida a observação completa; não há retry. `eval_count` final prevalece. O trade-off é mais informação de saída ao vivo com potencial sobrecarga e compatibilidade variável; essa opção precisa acompanhar comparações/exportações.
+
+Prévia incompleta fica na memória até ser substituída, inclusive em falha/cancelamento, e pode aparecer no JSON exportado. Texto de thinking e metadata bruta não entram no estado. O frontend mantém textContent e não anuncia cada fragmento ao leitor de tela por uma região de texto aria-live de alto volume.
+
+A fronteira pública da PWA acrescenta FAQ estática e help.js, sem token nem consumo de API. Help.js contém somente tema e tooltips; app.js permanece responsável pelo benchmark. SW v2 armazena dez assets públicos explícitos, sem página principal, APIs, prévia, prompt, resposta ou exportações. Fontes externas na FAQ são links abertos por ação do usuário, sem fetch/CDN na página.
+
+A avaliação Windows está registrada em [TASK-WIN-01](backlog.md): reutilizar o Compose padrão até que um teste real demonstre necessidade de arquivo específico. Não há nova configuração Docker nesta mudança.
+
+## 15. Evolução SDD-004: resumo separado do ambiente
+
+`app.main` compõe o novo `SystemCollector`, independente do manager/cliente Ollama, e injeta em AppServer. A borda oferece `/api/system` com proteções comuns e consulta `manager.is_active()` somente para decidir pausa. Fatos estáticos por instância e cache dinâmico de dez segundos ficam exclusivamente no coletor, sem inserir inventário em estado, linhas, CSV/JSON ou service worker.
+
+```mermaid
+flowchart LR
+    View["system.js: faixa e detalhes"] -->|"GET /api/system · no-store"| HTTP["Handler"]
+    HTTP -->|"consulta breve: ativo?"| Manager["BenchmarkManager"]
+    HTTP -->|"snapshot busy"| Collector["SystemCollector · memória volátil"]
+    Collector -->|"fontes fixas e limitadas"| OS["Ambiente do backend: Linux/Windows/container"]
+    Target["Ollama externo: não inspecionado pelo coletor"]
+```
+
+O alvo Ollama aparece apenas como fronteira externa não inspecionada; não existe uma integração de inventário com ele. Não há subprocesso arbitrário, serviço de sistema, dependência neofetch/fastfetch, Docker socket, privilégio ou montagem sensível. Nomes de campos são uma allowlist; falhas deixam desconhecidos em vez de expor dados brutos. Fontes e relógio injetáveis permitem testes completamente sintéticos dos coletores.
+
+Coleta dinâmica ocorre fora dos locks. Solicitações concorrentes e teste ativo reutilizam o último snapshot com flags; este mecanismo reduz interferência, sem prometer isolamento absoluto de recursos do sistema. No Docker, CPU/kernel podem ser compartilhados e RAM só recebe capacidade num escopo comprovável; host/Ollama não são presumidos equivalentes ao container.
+
+A faixa mantém a identidade visual do app em vez de criar um dashboard genérico: origem/SO, CPU/GPU/RAM separados em uma superfície, RAM com barra somente quando conhecida, detalhes inline responsivos e números tabulares. Scopes técnicos são traduzidos, nomes completos permanecem nos detalhes e o resumo pode abreviar prefixos redundantes somente para legibilidade. Hover-out sem pin/foco fecha após breve intervalo; botão/toque, Escape e Fechar preservam navegação sem modal ou focus trap.
+
+`system.js` é script público genérico separado, mas fica fora do cache; a FAQ não o carrega. SW v3 mantém dez assets públicos e nunca inventário ou `/api/system`. Contrato e minimização estão na [SDD-004](changes/004-resumo-ambiente-dinamico.md), [especificação](especificacao-tecnica.md) e [privacidade](../PRIVACY.md).
+
+## Biblioteca e nome local (SDD-005/006)
+
+`prompts.js` reúne catálogo sintético e controlador do dialog nativo; `prompts.css` usa os temas existentes. O módulo só escreve no textarea por ação final e não depende do cliente Ollama. Escuta benchmark-status e revalida o estado local antes da aplicação. O servidor serve os dois assets pela whitelist; não existe API de catálogo, storage ou caminho de inferência novo. Os assets ficam fora do cache PWA v3.
+
+`SystemCollector` acrescenta hostname por socket.gethostname sem DNS, uma vez por instância, com sanitização e null em falha. É a única exceção de identificação local solicitada na SDD-006. O DOM rotula máquina/container; o campo permanece no inventário volátil separado do manager, CSV/JSON e cache.

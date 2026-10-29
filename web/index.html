@@ -9,37 +9,119 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script src="/help.js"></script>
 <script src="/app.js"></script>
 <script src="/pwa.js" defer></script>
+<script src="/system.js" defer></script>
+<script src="/prompts.js" defer></script>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/prompts.css">
 </head>
 <body>
 <main>
-<header><div class="header-top"><p class="eyebrow">DESEMPENHO LOCAL</p><label class="theme-control" for="theme-select">Tema<select id="theme-select" aria-label="Tema da interface"><option value="light">Claro</option><option value="dark">Escuro</option></select></label></div><h1 class="app-title"><img src="/icons/icon.svg" width="56" height="56" alt="">Ollama Benchmark</h1><p>Compare velocidade e tempo de resposta dos seus modelos.</p><button id="install-app" type="button" hidden>Instalar aplicativo</button><p id="install-status" class="note" role="status">Para instalar, use a opção de instalar aplicativo no menu do Chrome ou Edge. O servidor local deve continuar ligado.</p></header>
+<header class="dashboard-header">
+<div class="header-top prompts-header-top"><label class="theme-control" for="theme-select">Tema<select id="theme-select" aria-label="Tema da interface"><option value="light">Claro</option><option value="dark">Escuro</option></select></label></div>
+<h1 class="app-title"><img src="/icons/icon.svg" width="56" height="56" alt="">Ollama Benchmark</h1>
+<p class="prompts-guide-link"><a href="/faq.html">Guia de tokens, tempos e custos</a></p>
+<p class="header-description">Velocidade e tempo de resposta dos seus modelos, medidos neste ambiente.</p>
+<div id="system-environment" class="system-environment">
+<h2 id="system-heading" class="sr-only">Ambiente da execução</h2>
+<div id="system-summary" class="system-strip" role="group" aria-labelledby="system-heading">
+<div class="system-provenance"><span id="system-source" class="system-source">Ambiente não informado</span><span id="system-os" class="system-os">Consultando ambiente…</span></div>
+<dl class="system-strip-data">
+<div class="system-fact"><dt>CPU</dt><dd id="system-cpu">Não informado</dd></div>
+<div class="system-fact"><dt>GPU</dt><dd id="system-gpu">Não informado</dd></div>
+<div class="system-fact system-memory"><dt>RAM</dt><dd id="system-ram">Não informado</dd><progress id="system-memory-bar" max="100" value="0" aria-label="Uso de RAM no escopo informado" hidden></progress></div>
+</dl>
+<button id="system-toggle" class="system-toggle" type="button" aria-controls="system-details" aria-expanded="false">Ver detalhes<span aria-hidden="true">+</span></button>
+</div>
+<div id="system-details" class="system-details" role="region" aria-labelledby="system-detail-title" hidden>
+<div class="system-detail-head"><div><h3 id="system-detail-title">Ambiente da execução</h3><p id="system-note" class="system-note">Os dados pertencem ao processo Python, que pode executar em um container.</p></div><button id="system-close" class="system-close" type="button" aria-label="Fechar detalhes do ambiente">Fechar</button></div>
+<dl class="system-detail-grid">
+<div><dt id="system-hostname-label">Hostname da máquina</dt><dd id="system-hostname">Não informado</dd></div>
+<div><dt>Sistema operacional</dt><dd id="system-detail-os">Não informado</dd></div>
+<div><dt>Arquitetura</dt><dd id="system-architecture">Não informado</dd></div>
+<div><dt>Kernel</dt><dd id="system-kernel">Não informado</dd></div>
+<div><dt>CPU</dt><dd id="system-detail-cpu">Não informado</dd></div>
+<div><dt>Núcleos físicos / CPUs lógicas</dt><dd id="system-cores">Não informado</dd></div>
+<div><dt>Escopo da CPU</dt><dd id="system-cpu-scope">Não informado</dd></div>
+<div><dt>GPU identificada no ambiente</dt><dd id="system-detail-gpu">Não informado</dd></div>
+<div><dt>Escopo da GPU</dt><dd id="system-gpu-scope">Não informado</dd></div>
+<div><dt>RAM usada / capacidade</dt><dd id="system-detail-ram">Não informado</dd></div>
+<div><dt>RAM disponível</dt><dd id="system-memory-available">Não informado</dd></div>
+<div><dt>Escopo da RAM</dt><dd id="system-memory-scope">Não informado</dd></div>
+<div><dt>Sistema de arquivos do app: usado / total</dt><dd id="system-disk">Não informado</dd></div>
+<div><dt>Tempo de atividade informado</dt><dd id="system-uptime">Não informado</dd></div>
+<div><dt>Escopo do tempo de atividade</dt><dd id="system-uptime-scope">Não informado</dd></div>
+</dl>
+<p id="system-gpu-note" class="system-note">Uma lista vazia não prova ausência física de GPU. Este painel não identifica a GPU usada pelo Ollama.</p>
+<div class="system-detail-footer"><div><p id="system-collected" class="system-collected">Coleta: não informada</p><p id="system-status" class="system-status" role="status">Consultando ambiente…</p></div><button id="system-refresh" type="button">Atualizar</button></div>
+<p class="system-privacy">Inventário separado dos resultados: não entra no CSV/JSON do benchmark nem no cache da PWA.</p>
+</div>
+</div>
+<div class="header-actions"><button id="install-app" type="button" hidden>Instalar aplicativo</button></div>
+<p id="install-status" class="note install-guidance" role="status">Para instalar, use a opção de instalar aplicativo no menu do Chrome ou Edge. O servidor local deve continuar ligado.</p>
+</header>
 <section aria-labelledby="connection-title"><div class="section-head"><h2 id="connection-title">1. Conexão e modelos</h2><button id="refresh" type="button">Atualizar modelos</button></div><p id="connection" role="status">Consultando Ollama…</p><div id="models" class="models"></div></section>
 <form id="benchmark-form">
-<section aria-labelledby="settings-title"><h2 id="settings-title">2. Configure o teste</h2>
+<section aria-labelledby="settings-title"><div class="section-head prompts-section-head"><h2 id="settings-title">2. Configure o teste</h2><button id="prompts-open" type="button" aria-haspopup="dialog" aria-controls="prompts-dialog">Biblioteca de pedidos</button></div>
 <label for="prompt">Pedido enviado a todos os modelos</label><textarea id="prompt" rows="4" maxlength="16000" required>Explique em português como funciona uma API REST. Descreva recursos, métodos HTTP, códigos de resposta e dê exemplos práticos. Escreva uma explicação detalhada.</textarea>
 <div class="fields">
-<label>Limite de saída (tokens)<input id="num_predict" type="number" min="1" max="4096" value="128" required></label>
-<label>Contexto (tokens)<input id="num_ctx" type="number" min="512" max="131072" value="4096" required></label>
-<label>Execuções por modelo<input id="repetitions" type="number" min="2" max="10" value="3" required></label>
-<label>Tempo máximo por execução (s)<input id="timeout" type="number" min="10" max="1800" value="180" required></label>
+<div class="field"><div class="field-label"><label for="num_predict">Limite de saída (tokens)</label><span class="help"><button type="button" class="help-trigger" aria-label="Sobre limite de saída" aria-describedby="help-output" aria-expanded="false">?</button><span id="help-output" role="tooltip" class="help-tooltip" hidden>Máximo de tokens de saída solicitado ao modelo; ele pode terminar antes.</span></span></div><input id="num_predict" type="number" min="1" max="4096" value="128" required></div>
+<div class="field"><div class="field-label"><label for="num_ctx">Contexto (tokens)</label><span class="help"><button type="button" class="help-trigger" aria-label="Sobre contexto" aria-describedby="help-context" aria-expanded="false">?</button><span id="help-context" role="tooltip" class="help-tooltip" hidden>Espaço solicitado para entrada e geração; aumentar o contexto pode exigir mais memória.</span></span></div><input id="num_ctx" type="number" min="512" max="131072" value="4096" required></div>
+<div class="field"><div class="field-label"><label for="repetitions">Execuções por modelo</label><span class="help"><button type="button" class="help-trigger" aria-label="Sobre execuções" aria-describedby="help-runs" aria-expanded="false">?</button><span id="help-runs" role="tooltip" class="help-tooltip" hidden>Inclui a primeira chamada; o resumo usa apenas as repetições concluídas.</span></span></div><input id="repetitions" type="number" min="2" max="10" value="3" required></div>
+<div class="field"><div class="field-label"><label for="timeout">Tempo máximo por execução (s)</label><span class="help"><button type="button" class="help-trigger" aria-label="Sobre tempo máximo" aria-describedby="help-timeout" aria-expanded="false">?</button><span id="help-timeout" role="tooltip" class="help-tooltip" hidden>Prazo da chamada de geração; consultas de metadados têm tempo separado.</span></span></div><input id="timeout" type="number" min="10" max="1800" value="180" required></div>
 </div>
 <label class="check"><input id="think" type="checkbox"> Ativar raciocínio nos modelos compatíveis</label>
+<div class="instrument-option"><label class="check" for="live_token_count"><input id="live_token_count" type="checkbox"> Contar tokens de saída ao vivo (instrumentado)</label><span class="help"><button type="button" class="help-trigger" aria-label="Sobre contagem instrumentada" aria-describedby="help-instrumented" aria-expanded="false">?</button><span id="help-instrumented" role="tooltip" class="help-tooltip" hidden>Usa metadados por token quando disponíveis; pode adicionar sobrecarga e não ser aceito pelo modelo.</span></span></div>
+<p class="note">Modo instrumentado opcional: pode alterar o desempenho. Tokens observados são provisórios; a estatística final continua sendo a referência.</p>
 <p class="note">O teste usa temperatura 0 e seed 42. Mesmo pedido repetido pode aproveitar cache. Outros aplicativos usando o Ollama alteram os tempos. Não há isolamento entre clientes.</p>
 <div class="actions"><button id="start" class="primary" type="submit">Iniciar comparação</button><button id="cancel" type="button" disabled>Cancelar teste</button></div>
 </section></form>
 <p id="error" role="alert" hidden></p>
+<section id="live-panel" aria-labelledby="live-title" hidden>
+<div class="section-head"><h2 id="live-title">Execução ao vivo</h2><a href="/faq.html#contagem-ao-vivo">Como interpretar os contadores</a></div>
+<p id="live-status" role="status">Aguardando geração.</p>
+<div class="live-stats">
+<div><span>Tempo decorrido</span><strong id="live-elapsed">—</strong></div>
+<div><span>Primeiro conteúdo</span><strong id="live-first-content">—</strong></div>
+<div><span>Primeiro texto</span><strong id="live-first-text">—</strong></div>
+<div><span>Caracteres de resposta</span><strong id="live-characters">—</strong></div>
+<div><span>Caracteres de raciocínio</span><strong id="live-thinking">—</strong></div>
+<div><span>Fragmentos recebidos</span><strong id="live-fragments">—</strong></div>
+</div>
+<p id="live-count-status">Tokens exatos: aguardando medição final.</p>
+<dl class="token-stats"><div><dt>Entrada</dt><dd id="live-input">—</dd></div><div><dt>Saída</dt><dd id="live-output">—</dd></div><div><dt>Cache (parte da entrada)</dt><dd id="live-cache">—</dd></div><div><dt>Total entrada + saída</dt><dd id="live-total">—</dd></div></dl>
+<p class="note">Fragmentos e caracteres não são tokens. As estatísticas finais são a referência; a opção instrumentada pode mostrar tokens de saída observados separadamente. Este painel acompanha somente os testes deste app.</p>
+<p id="live-observed">Contagem instrumentada desativada.</p>
+<h3>Prévia da resposta</h3><pre id="live-response" tabindex="0" aria-label="Prévia da resposta gerada">Aguardando texto…</pre>
+</section>
+
 <section aria-labelledby="results-title"><div class="section-head"><h2 id="results-title">3. Resultados</h2><div class="exports"><a href="/api/export?format=csv" download>Baixar CSV</a><a href="/api/export?format=json" download>Baixar JSON</a></div></div>
 <p id="progress" role="status">Nenhum teste iniciado.</p><progress id="progress-bar" value="0" max="1" aria-label="Execuções concluídas"></progress>
+<div class="usage-panel" aria-labelledby="usage-title"><h3 id="usage-title">Tokens medidos nas execuções concluídas</h3><p id="usage-status">Ainda não há execuções concluídas.</p><dl class="token-stats"><div><dt>Entrada</dt><dd id="usage-input">—</dd></div><div><dt>Saída</dt><dd id="usage-output">—</dd></div><div><dt>Cache (parte da entrada)</dt><dd id="usage-cache">—</dd></div><div><dt>Total entrada + saída</dt><dd id="usage-total">—</dd></div></dl><p class="note">Falhas e cancelamentos não entram neste acumulado; seu consumo final é desconhecido, não zero. Cache não é somado novamente. Estes números não são uma fatura.</p></div>
 <p class="note">Resumo: mediana das execuções 2 em diante. A primeira execução aparece separada, mesmo quando o modelo já estava carregado.</p>
-<div class="table-wrap"><table><caption>Comparação das execuções repetidas</caption><thead><tr><th>Modelo</th><th>Repetições válidas</th><th>Tokens/s</th><th>Primeiro texto (s)</th><th>Total (s)</th><th>Primeira chamada (s)</th></tr></thead><tbody id="summary"><tr><td colspan="6">Os resultados aparecerão aqui.</td></tr></tbody></table></div>
-<details open><summary>Execuções individuais e métricas</summary><div class="table-wrap"><table><thead><tr><th>Modelo / execução</th><th>Estado</th><th>Carregado antes</th><th>Tokens</th><th>Tokens/s</th><th>Primeiro conteúdo (s)</th><th>Primeiro texto (s)</th><th>Total medido (s)</th><th>Total Ollama (s)</th><th>Carga (s)</th><th>Prompt (s)</th><th>Geração (s)</th></tr></thead><tbody id="rows"><tr><td colspan="12">Sem execuções.</td></tr></tbody></table></div></details>
+<div class="table-wrap"><table><caption>Comparação das execuções repetidas</caption><thead><tr><th>Modelo</th><th>Repetições válidas</th><th>Tokens/s<span class="help"><button type="button" class="help-trigger" aria-label="Sobre tokens por segundo" aria-describedby="help-speed-1" aria-expanded="false">?</button><span id="help-speed-1" role="tooltip" class="help-tooltip" hidden>Tokens de saída divididos pelo tempo de geração informado pelo Ollama.</span></span></th><th>Primeiro texto (s)<span class="help"><button type="button" class="help-trigger" aria-label="Sobre primeiro texto" aria-describedby="help-first-text-1" aria-expanded="false">?</button><span id="help-first-text-1" role="tooltip" class="help-tooltip" hidden>Tempo até o início da resposta visível; o raciocínio pode começar antes.</span></span></th><th>Total (s)</th><th>Primeira chamada (s)</th></tr></thead><tbody id="summary"><tr><td colspan="6">Os resultados aparecerão aqui.</td></tr></tbody></table></div>
+<details open><summary>Execuções individuais e métricas</summary><div class="table-wrap"><table><thead><tr><th>Modelo / execução</th><th>Estado</th><th>Carregado antes</th><th>Entrada</th><th>Cache</th><th>Saída</th><th>Total de tokens</th><th>Saída observada</th><th>Conferência instrumentada</th><th>Tokens/s<span class="help"><button type="button" class="help-trigger" aria-label="Sobre tokens por segundo" aria-describedby="help-speed-2" aria-expanded="false">?</button><span id="help-speed-2" role="tooltip" class="help-tooltip" hidden>Tokens de saída divididos pelo tempo de geração informado pelo Ollama.</span></span></th><th>Primeiro conteúdo (s)</th><th>Primeiro texto (s)<span class="help"><button type="button" class="help-trigger" aria-label="Sobre primeiro texto" aria-describedby="help-first-text-2" aria-expanded="false">?</button><span id="help-first-text-2" role="tooltip" class="help-tooltip" hidden>Tempo até o início da resposta visível; o raciocínio pode começar antes.</span></span></th><th>Total medido (s)<span class="help"><button type="button" class="help-trigger" aria-label="Sobre tempo total" aria-describedby="help-wall-1" aria-expanded="false">?</button><span id="help-wall-1" role="tooltip" class="help-tooltip" hidden>Tempo observado pelo cliente Python para concluir a geração.</span></span></th><th>Total Ollama (s)</th><th>Carga (s)</th><th>Prompt (s)</th><th>Geração (s)</th></tr></thead><tbody id="rows"><tr><td colspan="17">Sem execuções.</td></tr></tbody></table></div></details>
 <details><summary>Texto gerado e mensagens de erro</summary><div id="responses"></div></details>
 <p class="note">Primeiro conteúdo inclui raciocínio, quando presente. Primeiro texto mede o início da resposta visível. Tokens são contados pelo Ollama, não por fragmentos do stream. Memória de GPU não mede utilização nem identifica Vulkan/ROCm.</p>
 </section>
 <footer>Somente sua máquina. Sem pacotes Python externos. Resultados ficam na memória até fechar ou iniciar outro teste; exporte para guardar.</footer>
 </main>
+
+<dialog id="prompts-dialog" aria-labelledby="prompts-title" aria-describedby="prompts-description">
+<div class="prompts-heading"><div><h2 id="prompts-title">Biblioteca de pedidos</h2><p id="prompts-description">Exemplos locais para comparar modelos. Selecione, confira e use no seu teste.</p></div><button id="prompts-close" type="button" aria-label="Fechar biblioteca de pedidos">Fechar</button></div>
+<div class="prompts-body">
+<div class="prompts-filters"><div><label for="prompts-type">Tipo de pedido</label><select id="prompts-type"><option value="all">Todos os tipos</option><option value="code">Código</option><option value="non-code">Não código</option></select></div><div><label for="prompts-complexity">Complexidade</label><select id="prompts-complexity"><option value="all">Todas as complexidades</option><option value="simple">Simples</option><option value="intermediate">Intermediário</option><option value="advanced">Avançado</option></select></div></div>
+<p class="prompts-note">Complexidade é uma classificação editorial. Selecionar um exemplo não ajusta modelo, contexto ou limite de saída; pedidos longos podem precisar de mais tokens.</p>
+<p id="prompts-count" class="prompts-count" role="status">18 pedidos disponíveis.</p>
+<div class="prompts-workspace"><div><div id="prompts-list" class="prompts-list" role="group" aria-label="Escolha um pedido"></div><p id="prompts-empty" hidden>Nenhum pedido com estes filtros. Escolha outra combinação.</p></div>
+<div class="prompts-preview"><h3 id="prompts-preview-title">Prévia do pedido</h3><p id="prompts-preview-description">Selecione um exemplo para ler o texto completo.</p><pre id="prompts-preview-text" tabindex="0" aria-label="Texto completo do pedido">Nenhum pedido selecionado.</pre>
+<div id="prompts-replace-warning" class="prompts-replace-warning" hidden><p>Seu pedido atual foi editado. Usar este exemplo substituirá o texto inteiro.</p><label for="prompts-replace-confirm"><input id="prompts-replace-confirm" type="checkbox"> Substituir meu pedido atual</label></div>
+</div></div>
+</div>
+<div class="prompts-footer"><p id="prompts-status" role="status">Somente o pedido será preenchido. Nenhum teste será iniciado.</p><div class="prompts-actions"><button id="prompts-cancel" type="button">Cancelar</button><button id="prompts-apply" class="primary" type="button" disabled>Usar pedido</button></div></div>
+</dialog>
+
 </body>
 </html>

@@ -235,11 +235,11 @@ class ClientTests(HttpFixture):
         manager = BenchmarkManager(self.client)
         original = self.client.generate
         calls = []
-        def generate(*args):
+        def generate(*args, **kwargs):
             calls.append(1)
             if len(calls) == 2:
                 raise ValueError('falha posterior')
-            return original(*args)
+            return original(*args, **kwargs)
         with patch.object(self.client, 'generate', side_effect=generate):
             manager.start(SETTINGS)
             manager.thread.join(3)

@@ -14,6 +14,11 @@ WEB = Path(__file__).resolve().parent.parent / 'web'
 STATIC_ASSETS = {
     '/': ('index.html', 'text/html; charset=utf-8'),
     '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+    '/system.js': ('system.js', 'text/javascript; charset=utf-8'),
+    '/prompts.js': ('prompts.js', 'text/javascript; charset=utf-8'),
+    '/prompts.css': ('prompts.css', 'text/css; charset=utf-8'),
+    '/help.js': ('help.js', 'text/javascript; charset=utf-8'),
+    '/faq.html': ('faq.html', 'text/html; charset=utf-8'),
     '/pwa.js': ('pwa.js', 'text/javascript; charset=utf-8'),
     '/sw.js': ('sw.js', 'text/javascript; charset=utf-8'),
     '/style.css': ('style.css', 'text/css; charset=utf-8'),
@@ -30,9 +35,10 @@ STATIC_ASSETS = {
 class AppServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, manager):
+    def __init__(self, address, manager, system_info=None):
         super().__init__(address, Handler)
         self.manager = manager
+        self.system_info = system_info
         self.token = secrets.token_urlsafe(32)
         self.allowed_hosts = {f'127.0.0.1:{self.server_port}', f'localhost:{self.server_port}'}
 
@@ -90,6 +96,17 @@ class Handler(BaseHTTPRequestHandler):
             self.send_data(200, body, content_type)
         elif url.path == '/api/state':
             self.json(200, self.server.manager.snapshot())
+        elif url.path == '/api/system':
+            if self.server.system_info is None:
+                self.json(503, {'error': 'Resumo do ambiente indisponível nesta instância.'})
+            else:
+                try:
+                    active = self.server.manager.is_active()
+                    result = self.server.system_info.snapshot(busy=active)
+                except Exception:
+                    self.json(503, {'error': 'Resumo do ambiente indisponível nesta instância.'})
+                else:
+                    self.json(200, result)
         elif url.path == '/api/health':
             self.json(200, {'status': 'ok'})
         elif url.path == '/api/models':

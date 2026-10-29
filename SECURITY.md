@@ -33,3 +33,21 @@ O endpoint do Ollama é configurado no processo, com nomes de host permitidos re
 ## Comunicação de problemas
 
 Não publique credenciais, prompts privados ou exportações pessoais em issues. Ao informar um problema, use um exemplo mínimo fictício e remova tokens, caminhos pessoais e identificadores da máquina. Se o repositório oferecer comunicação privada de vulnerabilidades, prefira esse canal para falhas sensíveis.
+
+## Acompanhamento e ajuda estática
+
+O acompanhamento ao vivo pertence somente às execuções iniciadas nesta instância do app. Texto parcial é apresentado por `textContent`, com limite de prévia; raciocínio integral não é preservado nem exibido. Contagens de caracteres/fragmentos são distintas dos tokens finais informados pelo Ollama.
+
+A FAQ e o script público de ajuda/tema podem entrar na allowlist de Cache Storage; eles não recebem token ou resultados. APIs, página principal com token e prévias continuam fora do cache. Exportações JSON podem incluir a prévia da tentativa atual/incompleta e devem ser revistas antes de compartilhar.
+
+## Inventário mínimo do ambiente
+
+`GET /api/system` compartilha as proteções Host/Origin/Fetch-Site e `Cache-Control: no-store`, sem parâmetros que selecionem comandos ou caminhos. O coletor não usa inventário remoto, Docker socket, privilégios adicionais ou mounts de host para enriquecer resultados. Falhas de leitura produzem campos desconhecidos; dados do container não são apresentados como prova de capacidade/uso do host ou do Ollama.
+
+A coleta é limitada e volátil. Identificadores de pessoa/máquina, caminhos privados, nomes de arquivos e lista de pacotes não integram o contrato. Hardware e software combinados ainda podem formar fingerprint; não compartilhar capturas reais sem avaliar o conteúdo. Inventário não entra no cache PWA, logs intencionais de payload ou exportação dos benchmarks.
+
+## Biblioteca e identificação local autorizada
+
+A biblioteca de pedidos é catálogo sintético local, sem execução automática ou persistência. Seleção/prévia não fazem requisições de inferência; Usar pedido exige confirmação para substituir edição e respeita bloqueio durante benchmark.
+
+Por solicitação explícita, `/api/system` inclui hostname local sanitizado e volátil, obtido sem DNS. No container representa o namespace do container, não o host físico. Pode identificar o ambiente: evite compartilhar capturas. O campo fica fora de logs, estado/exportações de benchmark e cache. As demais restrições de identificadores permanecem.

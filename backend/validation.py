@@ -24,4 +24,7 @@ def validate_settings(value):
     if type(value.get('think', False)) is not bool:
         raise ValueError('think precisa ser verdadeiro ou falso.')
     result['think'] = value.get('think', False)
+    if type(value.get('live_token_count', False)) is not bool:
+        raise ValueError('live_token_count precisa ser verdadeiro ou falso.')
+    result['live_token_count'] = value.get('live_token_count', False)
     return result

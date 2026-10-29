@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import http.client
 import json
+import math
 import socket
 import threading
 import time
@@ -54,7 +55,7 @@ class OllamaClient:
             if conn is not None:
                 conn.close()
 
-    def generate(self, model, settings, cancel_event):
+    def generate(self, model, settings, cancel_event, progress=None):
         started = time.perf_counter()
         deadline = started + settings['timeout']
         conn = http.client.HTTPConnection(self.host, self.port, timeout=settings['timeout'])
@@ -64,6 +65,38 @@ class OllamaClient:
         response = None
         text = ''
         expired = threading.Event()
+        output_characters = thinking_characters = fragments = 0
+        last_published = None
+        published_content = False
+        observe_tokens = settings.get('live_token_count', False)
+        observed_tokens = 0 if observe_tokens else None
+        observation_status = 'pending' if observe_tokens else 'disabled'
+
+        def publish(status='waiting', force=False, result=None):
+            nonlocal last_published, published_content
+            if progress is None:
+                return
+            now = time.perf_counter()
+            first_content_update = fragments > 0 and not published_content
+            if not force and not first_content_update and last_published is not None and now - last_published < .25:
+                return
+            event = {
+                'status': status, 'elapsed_s': now - started, 'response': text,
+                'output_characters': output_characters, 'thinking_characters': thinking_characters,
+                'fragments': fragments, 'first_content_s': first_content, 'first_text_s': first_text,
+                'tokens': None, 'prompt_tokens': None, 'prompt_cached_tokens': None, 'total_tokens': None,
+                'count_status': 'unavailable' if status in {'failed', 'cancelled'} else 'pending',
+                'output_tokens_observed': observed_tokens, 'token_observation_status': observation_status,
+            }
+            if result is not None:
+                event.update({field: result[field] for field in ['tokens', 'prompt_tokens', 'prompt_cached_tokens', 'total_tokens']})
+                event['count_status'] = 'final'
+                event['elapsed_s'] = result['wall_s']
+            elif status in {'failed', 'cancelled'}:
+                event.update(output_tokens_observed=None, token_observation_status='unavailable' if observe_tokens else 'disabled')
+            progress(event)
+            last_published = now
+            published_content = published_content or fragments > 0
 
         def expire():
             expired.set()
@@ -81,9 +114,12 @@ class OllamaClient:
         timer.daemon = True
         timer.start()
         try:
+            publish(force=True)
             if cancel_event.is_set():
                 raise Cancelled()
             payload = {'model': model, 'prompt': settings['prompt'], 'stream': True, 'think': settings['think'], 'keep_alive': '2m', 'options': {'num_ctx': settings['num_ctx'], 'num_predict': settings['num_predict'], 'temperature': 0, 'seed': 42}}
+            if observe_tokens:
+                payload.update(logprobs=True, top_logprobs=0)
             conn.request('POST', '/api/generate', body=json.dumps(payload).encode(), headers={'Content-Type': 'application/json'})
             with self._lock:
                 self._socket = conn.sock
@@ -116,15 +152,34 @@ class OllamaClient:
                     raise ValueError(str(chunk['error']))
                 elapsed = time.perf_counter() - started
                 output, thinking = chunk.get('response', ''), chunk.get('thinking', '')
+                if observe_tokens and observation_status != 'unavailable':
+                    entries = chunk.get('logprobs')
+                    if 'logprobs' in chunk or output or thinking:
+                        valid = isinstance(entries, list) and (bool(entries) or not (output or thinking)) and all(
+                            isinstance(entry, dict) and isinstance(entry.get('token'), str)
+                            and (type(entry.get('logprob')) is int or (type(entry.get('logprob')) is float and math.isfinite(entry['logprob'])))
+                            for entry in entries
+                        )
+                        if valid:
+                            observed_tokens += len(entries)
+                        else:
+                            observed_tokens, observation_status = None, 'unavailable'
                 if first_content is None and (output or thinking):
                     first_content = elapsed
                 if first_text is None and output:
                     first_text = elapsed
                 if isinstance(output, str):
-                    text = (text + output)[:64000]
+                    output_characters += len(output)
+                    if len(text) < 64000:
+                        text += output[:64000 - len(text)]
+                if isinstance(thinking, str):
+                    thinking_characters += len(thinking)
+                if output or thinking:
+                    fragments += 1
                 if chunk.get('done'):
                     final = chunk
                     break
+                publish('streaming' if fragments else 'waiting')
             if cancel_event.is_set():
                 raise Cancelled()
             elapsed = time.perf_counter() - started
@@ -134,8 +189,13 @@ class OllamaClient:
                 raise ValueError('Stream interrompido sem métricas finais.')
             result = metrics(final, elapsed, first_content, first_text)
             result['response'] = text
+            if observation_status == 'pending':
+                observation_status = 'matched' if observed_tokens == result['tokens'] else 'mismatch'
+            result.update(output_tokens_observed=observed_tokens, token_observation_status=observation_status)
+            publish('completed', force=True, result=result)
             return result
         except Exception:
+            publish('cancelled' if cancel_event.is_set() else 'failed', force=True)
             if cancel_event.is_set():
                 raise Cancelled() from None
             if expired.is_set():

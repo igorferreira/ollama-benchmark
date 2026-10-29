@@ -5,12 +5,12 @@ import csv
 import io
 
 
-CSV_FIELDS = ['model', 'run', 'phase', 'status', 'loaded_before', 'tokens', 'tokens_per_s', 'first_content_s', 'first_text_s', 'wall_s', 'total_s', 'load_s', 'prompt_tokens', 'prompt_cached_tokens', 'prompt_s', 'generation_s', 'done_reason', 'size_vram', 'size_memory', 'error']
+CSV_FIELDS = ['model', 'run', 'phase', 'status', 'loaded_before', 'tokens', 'tokens_per_s', 'first_content_s', 'first_text_s', 'wall_s', 'total_s', 'load_s', 'prompt_tokens', 'prompt_cached_tokens', 'total_tokens', 'output_tokens_observed', 'token_observation_status', 'prompt_s', 'generation_s', 'done_reason', 'size_vram', 'size_memory', 'error']
 
 
 def csv_export(state):
     output = io.StringIO(newline='')
-    fields = CSV_FIELDS + ['started_at', 'prompt', 'num_predict', 'num_ctx', 'repetitions', 'timeout', 'think']
+    fields = CSV_FIELDS + ['started_at', 'prompt', 'num_predict', 'num_ctx', 'repetitions', 'timeout', 'think', 'live_token_count']
     writer = csv.DictWriter(output, fieldnames=fields, extrasaction='ignore')
     writer.writeheader()
     for row in state['rows']:

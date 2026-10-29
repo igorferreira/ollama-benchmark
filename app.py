@@ -9,6 +9,7 @@ import webbrowser
 from backend.http import AppServer
 from backend.manager import BenchmarkManager
 from backend.ollama import OllamaClient
+from backend.system_info import SystemCollector
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
         parser.error('APP_BIND deve ser 127.0.0.1 ou 0.0.0.0 (somente dentro do container).')
     client = OllamaClient(os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434'))
     manager = BenchmarkManager(client)
-    server = AppServer((host, args.port), manager)
+    server = AppServer((host, args.port), manager, SystemCollector())
     url = f'http://127.0.0.1:{server.server_port}'
     print(f'Ollama Benchmark: {url}', flush=True)
     if not args.no_browser:

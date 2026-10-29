@@ -110,7 +110,7 @@ A [matriz](rastreabilidade.md) relaciona todos os nomes atuais da suíte e as la
 6. **Integração real:** modelo instalado no Ollama e exportações; modo nativo e Docker Linux. Não comparar desempenho entre modos usando quantidades diferentes de saída.
 7. **Portabilidade futura:** execução Windows nativa e Docker Desktop, explicitamente ainda sem homologação na baseline.
 
-O tema não recebe um motor JavaScript como dependência da suíte Python. Seu comportamento precisa ser validado no navegador, além do teste HTTP de markup/ordem do script. Não usar testes estáticos como substituto para essa validação.
+Tema, FAQ e tooltips não recebem um motor JavaScript como dependência da suíte Python. Seu comportamento precisa ser validado no navegador, além do teste HTTP de markup/ordem do script. Não usar testes estáticos como substituto para essa validação.
 
 ## 6. Gates de conclusão de uma mudança
 
@@ -131,3 +131,11 @@ Não exigir uma nova rodada de benchmark real para edição puramente documental
 Ainda não existe versionamento semântico formal ou migração de dados, pois resultados não persistem no processo. `info.version` do OpenAPI identifica a baseline documental e não substitui versionamento de release. Se a API mudar, registrar alteração no contrato e explicar o efeito em clientes próprios que consomem `/api/*`.
 
 Arquivos de exportação não têm versão de schema no envelope atual. Preservar nomes/unidades ou introduzir mudança explícita e documentada; não reinterpretar silenciosamente resultados antigos. Não há promessa de importação ou compatibilidade de escrita entre futuras versões.
+
+## 8. Regras de manutenção da observação de tokens
+
+Na SDD-003, contadores gerais finais continuam distintos da observação opcional de saída por logprobs. Nunca trocar contagem de entradas válidas por quantidade de fragments ou aproximação por caracteres; metadata faltante deve permanecer indisponível até o fim da tentativa. Preservar final eval_count como autoridade e testar mismatch, ausência, zero, rejeição HTTP e cancelamento sem retry.
+
+Callback de progresso é síncrono, opcional e limitado. Evite copiar 64 mil caracteres por token ou chamar snapshot enquanto segura o lock do manager. A prévia e o acumulado são dados privados: nunca adicioná-los à allowlist do SW. Alterar recursos públicos de ajuda exige bump do cache e teste de que nenhum token/API/HTML principal entrou nele.
+
+Novos cenários automatizados ficam em tests/test_live.py e tests/test_faq.py. A matriz deve continuar contendo todos os métodos da suíte, além dos cenários manuais reais. A tarefa Windows/Docker Desktop é planejada no backlog e não pode ser marcada concluída com testes Linux.

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Ollama Benchmark Local",
-    "version": "baseline-2026-10-28",
+    "version": "sdd-004-2026-10-29",
     "description": "Contrato retrospectivo da versão implementada. JSON é subconjunto de YAML; este arquivo pode ser lido com json.load. Runtime continua somente Python stdlib. Interface local pessoal; não servidor público. Tema é estado do navegador e não altera API."
   },
   "servers": [
@@ -257,7 +257,16 @@
                       "current": null,
                       "started_at": null,
                       "error": null,
-                      "summary": []
+                      "summary": [],
+                      "live": null,
+                      "usage": {
+                        "completed_runs": 0,
+                        "excluded_runs": 0,
+                        "prompt_tokens": null,
+                        "tokens": null,
+                        "prompt_cached_tokens": null,
+                        "total_tokens": null
+                      }
                     }
                   },
                   "completedIllustrative": {
@@ -273,7 +282,8 @@
                         "num_ctx": 4096,
                         "repetitions": 3,
                         "timeout": 180,
-                        "think": false
+                        "think": false,
+                        "live_token_count": false
                       },
                       "rows": [
                         {
@@ -296,7 +306,10 @@
                           "done_reason": "length",
                           "response": "Resposta ilustrativa.",
                           "size_vram": 3000000000,
-                          "size_memory": 3100000000
+                          "size_memory": 3100000000,
+                          "total_tokens": 148,
+                          "output_tokens_observed": null,
+                          "token_observation_status": "disabled"
                         },
                         {
                           "model": "example:small",
@@ -318,7 +331,10 @@
                           "done_reason": "length",
                           "response": "Resposta ilustrativa.",
                           "size_vram": 3000000000,
-                          "size_memory": 3100000000
+                          "size_memory": 3100000000,
+                          "total_tokens": 148,
+                          "output_tokens_observed": null,
+                          "token_observation_status": "disabled"
                         },
                         {
                           "model": "example:small",
@@ -340,7 +356,10 @@
                           "done_reason": "length",
                           "response": "Resposta ilustrativa.",
                           "size_vram": 3000000000,
-                          "size_memory": 3100000000
+                          "size_memory": 3100000000,
+                          "total_tokens": 148,
+                          "output_tokens_observed": null,
+                          "token_observation_status": "disabled"
                         }
                       ],
                       "current": null,
@@ -369,14 +388,26 @@
                             "done_reason": "length",
                             "response": "Resposta ilustrativa.",
                             "size_vram": 3000000000,
-                            "size_memory": 3100000000
+                            "size_memory": 3100000000,
+                            "total_tokens": 148,
+                            "output_tokens_observed": null,
+                            "token_observation_status": "disabled"
                           },
                           "repeated_count": 2,
                           "tokens_per_s": 8.0,
                           "first_text_s": 2.1,
                           "wall_s": 18.0
                         }
-                      ]
+                      ],
+                      "live": null,
+                      "usage": {
+                        "completed_runs": 3,
+                        "excluded_runs": 0,
+                        "prompt_tokens": 60,
+                        "tokens": 384,
+                        "prompt_cached_tokens": null,
+                        "total_tokens": 444
+                      }
                     }
                   }
                 }
@@ -496,7 +527,8 @@
                 "num_ctx": 4096,
                 "repetitions": 3,
                 "timeout": 180,
-                "think": false
+                "think": false,
+                "live_token_count": false
               }
             }
           }
@@ -963,6 +995,221 @@
           }
         }
       }
+    },
+    "/faq.html": {
+      "get": {
+        "operationId": "getFaq",
+        "summary": "FAQ estática de conceitos e métricas.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recurso público, sem token ou dados de teste; elegível ao cache estático PWA.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/help.js": {
+      "get": {
+        "operationId": "getHelpScript",
+        "summary": "Tema e ajuda acessível sem consumo de API.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recurso público, sem token ou dados de teste; elegível ao cache estático PWA.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system": {
+      "get": {
+        "operationId": "getSystemSnapshot",
+        "summary": "Resumo dinâmico e limitado do ambiente do backend.",
+        "description": "Sem parâmetros de comando/caminho. Fatos estáticos por instância; snapshot dinâmico com intervalo mínimo10s. Durante running/cancelling, não coleta e devolve snapshot anterior ou campos desconhecidos com paused/stale. Resposta nunca entra em state/exportação ou cache PWA. Host/Origin/Fetch-Site e no-store comuns preservados.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, precisa coincidir exatamente com http:// + Host."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot com origem, escopos e timestamp. Campos desconhecidos são null.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSnapshot"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Coletor não injetado ou falha inesperada, sem detalhe privado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system.js": {
+      "get": {
+        "operationId": "getSystemScript",
+        "summary": "Apresentação do inventário e ciclo de atualização limitado.",
+        "description": "Script genérico sem token/identificadores. Fora da allowlist de cache do SW e não carregado pela FAQ.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts.js": {
+      "get": {
+        "operationId": "getPromptLibraryScript",
+        "summary": "Asset local da biblioteca de pedidos, fora do cache PWA",
+        "description": "Script genérico sem token/identificadores. Fora da allowlist de cache do SW e não carregado pela FAQ.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts.css": {
+      "get": {
+        "operationId": "getPromptLibraryStyle",
+        "summary": "Asset local da biblioteca de pedidos, fora do cache PWA",
+        "description": "Script genérico sem token/identificadores. Fora da allowlist de cache do SW e não carregado pela FAQ.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo.",
+            "content": {
+              "text/css": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1045,6 +1292,11 @@
           "think": {
             "type": "boolean",
             "default": false
+          },
+          "live_token_count": {
+            "type": "boolean",
+            "default": false,
+            "description": "Instrumentação opcional: envia logprobs=true/top_logprobs=0 para observar tokens de saída; pode alterar desempenho e depende do Ollama/modelo. Sem retry automático."
           }
         },
         "additionalProperties": true,
@@ -1059,7 +1311,8 @@
           "num_ctx",
           "repetitions",
           "timeout",
-          "think"
+          "think",
+          "live_token_count"
         ],
         "properties": {
           "models": {
@@ -1113,6 +1366,11 @@
           "think": {
             "type": "boolean",
             "default": false
+          },
+          "live_token_count": {
+            "type": "boolean",
+            "default": false,
+            "description": "Instrumentação opcional: envia logprobs=true/top_logprobs=0 para observar tokens de saída; pode alterar desempenho e depende do Ollama/modelo. Sem retry automático."
           }
         },
         "additionalProperties": false
@@ -1213,10 +1471,20 @@
             "minimum": 0
           },
           "prompt_tokens": {
-            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Contador final prompt_eval_count normalizado: inteiro não negativo ou null."
           },
           "prompt_cached_tokens": {
-            "description": "Valor copiado do Ollama sem revalidação de tipo; normalmente inteiro ou null."
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Subconjunto cache informado; não somar novamente ao total. Ausência/inválido vira null."
           },
           "done_reason": {
             "description": "Copiado sem revalidação; normalmente string. Default unknown se ausente."
@@ -1236,6 +1504,32 @@
           },
           "error": {
             "type": "string"
+          },
+          "total_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Entrada+saída somente quando ambas válidas. Não é total faturável."
+          },
+          "output_tokens_observed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Soma provisória de entradas logprobs válidas na opção instrumentada; null se desativada/indisponível."
+          },
+          "token_observation_status": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "unavailable",
+              "matched",
+              "mismatch"
+            ],
+            "description": "Conferência com eval_count final, que sempre determina tokens. Nenhuma metadata bruta é guardada."
           }
         },
         "additionalProperties": false,
@@ -1303,7 +1597,9 @@
           "current",
           "started_at",
           "error",
-          "summary"
+          "summary",
+          "live",
+          "usage"
         ],
         "properties": {
           "status": {
@@ -1376,6 +1672,19 @@
             "items": {
               "$ref": "#/components/schemas/Summary"
             }
+          },
+          "live": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveProgress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
           }
         },
         "additionalProperties": false
@@ -1453,6 +1762,442 @@
           }
         },
         "additionalProperties": false
+      },
+      "LiveProgress": {
+        "type": "object",
+        "required": [
+          "model",
+          "run",
+          "status",
+          "elapsed_s",
+          "response",
+          "output_characters",
+          "thinking_characters",
+          "fragments",
+          "first_content_s",
+          "first_text_s",
+          "tokens",
+          "prompt_tokens",
+          "prompt_cached_tokens",
+          "total_tokens",
+          "count_status",
+          "output_tokens_observed",
+          "token_observation_status"
+        ],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "run": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "streaming",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "elapsed_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "response": {
+            "type": "string",
+            "maxLength": 64000
+          },
+          "output_characters": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "thinking_characters": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "fragments": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Fragmentos não vazios de conteúdo; não são tokens."
+          },
+          "first_content_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "first_text_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prompt_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prompt_cached_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "count_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "final",
+              "unavailable"
+            ]
+          },
+          "output_tokens_observed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "token_observation_status": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "pending",
+              "unavailable",
+              "matched",
+              "mismatch"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Tentativa mais recente. Tokens gerais só finais; saída observada opcional via logprobs é provisória. Prévia volátil pode permanecer incompleta após falha/cancelamento. Não armazena thinking nem logprobs brutos."
+      },
+      "Usage": {
+        "type": "object",
+        "required": [
+          "completed_runs",
+          "excluded_runs",
+          "prompt_tokens",
+          "tokens",
+          "prompt_cached_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "completed_runs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "excluded_runs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "prompt_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "prompt_cached_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Acumulado apenas das linhas completed. Sem concluídas ou algum contador correspondente ausente/inválido: null. Falhas/cancelamentos são excluídos, não custo zero conhecido. Cache não é somado ao total."
+      },
+      "SystemSnapshot": {
+        "type": "object",
+        "required": [
+          "collected_at",
+          "environment",
+          "os",
+          "cpu",
+          "gpu",
+          "memory",
+          "disk",
+          "uptime_seconds",
+          "uptime_scope",
+          "refresh",
+          "hostname"
+        ],
+        "properties": {
+          "collected_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Instante UTC do último snapshot dinâmico bem-sucedido, null antes dele."
+          },
+          "environment": {
+            "type": "object",
+            "required": [
+              "kind",
+              "scope",
+              "note"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "native",
+                  "container",
+                  "unknown"
+                ]
+              },
+              "scope": {
+                "const": "backend_process"
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": false
+          },
+          "os": {
+            "type": "object",
+            "required": [
+              "name",
+              "kernel",
+              "architecture"
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 256
+              },
+              "kernel": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 256
+              },
+              "architecture": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": false
+          },
+          "cpu": {
+            "type": "object",
+            "required": [
+              "model",
+              "physical_cores",
+              "logical_cpus",
+              "scope"
+            ],
+            "properties": {
+              "model": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 256
+              },
+              "physical_cores": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "logical_cpus": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": false
+          },
+          "gpu": {
+            "type": "object",
+            "required": [
+              "models",
+              "scope",
+              "note"
+            ],
+            "properties": {
+              "models": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "maxItems": 16
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": false
+          },
+          "memory": {
+            "type": "object",
+            "required": [
+              "total_bytes",
+              "used_bytes",
+              "available_bytes",
+              "scope"
+            ],
+            "properties": {
+              "total_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "used_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "available_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "additionalProperties": false
+          },
+          "disk": {
+            "type": "object",
+            "required": [
+              "total_bytes",
+              "used_bytes",
+              "scope"
+            ],
+            "properties": {
+              "total_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "used_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "scope": {
+                "const": "app_filesystem"
+              }
+            },
+            "additionalProperties": false
+          },
+          "uptime_seconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "uptime_scope": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "refresh": {
+            "type": "object",
+            "required": [
+              "min_interval_s",
+              "paused",
+              "stale"
+            ],
+            "properties": {
+              "min_interval_s": {
+                "const": 10
+              },
+              "paused": {
+                "type": "boolean"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "hostname": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 256,
+            "description": "Nome local obtido por socket.gethostname uma vez por instância, sem DNS. No container é o nome do namespace, não do host físico. Identificador técnico volátil, excluído do benchmark/cache."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Inventário mínimo volátil do ambiente do backend, separado do benchmark. Null/lista GPU vazia significa desconhecido, não zero/ausência física. Nunca inclui identificadores pessoais, caminhos, alvos remotos ou dados de benchmark. Cgroup/container e kernel compartilhado têm escopo explícito."
       }
     }
   }

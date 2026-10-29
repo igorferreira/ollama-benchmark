@@ -6,12 +6,13 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 
 | Documento | Finalidade |
 | --- | --- |
-| [SDD: produto, requisitos e BDD](sdd.md) | Visão, escopo, atores, 14 RF, 7 RNF, 10 regras, 9 histórias e estados |
+| [SDD: produto, requisitos e BDD](sdd.md) | Visão, escopo, atores, requisitos funcionais/não funcionais, regras, histórias e estados |
 | [Arquitetura](arquitetura.md) | C4, componentes, threads, confiança, dados, sequências e deploy |
 | [Especificação técnica](especificacao-tecnica.md) | Endpoints, schemas, unidades, erros, limites, concorrência, CLI/env e exportações |
 | [OpenAPI 3.1](openapi.yaml) | Contrato legível por ferramentas, com sintaxe JSON válida como YAML |
 | [Rastreabilidade e validação](rastreabilidade.md) | Requisito → código → testes nomeados → evidência e lacunas |
 | [Operação](operacao.md) | Início, Docker, tema, exportação, diagnóstico e privacidade |
+| [Backlog](backlog.md) | Tarefas planejadas, incluindo validação Docker Desktop/Windows |
 | [Desenvolvimento spec-first](desenvolvimento.md) | Processo de mudança, estratégia de testes, checks e gates |
 | [Camadas e revisão SOLID](revisao-solid.md) | Avaliação por princípio com símbolos concretos e melhorias somente propostas |
 | [Segurança e privacidade](../SECURITY.md) | Limites de uso local, tratamento de dados e relato responsável |
@@ -22,6 +23,11 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 - [SDD-001 — Separação de responsabilidades](changes/001-separacao-responsabilidades.md): registro prospectivo escrito antes da refatoração, com mapeamento e critérios verificáveis.
 
 - [SDD-002 — Ícone e PWA](changes/002-pwa-icone.md): instalação, manifesto, ícones e limites de cache local.
+- [SDD-003 — Acompanhamento ao vivo e FAQ](changes/003-tokens-tempo-real-faq.md): progresso sem estimativa falsa de tokens, acumulado, ajuda e privacidade.
+- [SDD-004 — Resumo dinâmico do ambiente](changes/004-resumo-ambiente-dinamico.md): inventário mínimo volátil, origem, snapshots e visual acessível.
+
+- [SDD-005 — Biblioteca local de pedidos](changes/005-biblioteca-pedidos.md): exemplos, filtros, prévia e aplicação explícita sem iniciar teste.
+- [SDD-006 — Nome local e cabeçalho](changes/006-hostname-e-cabecalho.md): hostname volátil e acesso destacado ao guia.
 
 ## Decisões arquiteturais
 

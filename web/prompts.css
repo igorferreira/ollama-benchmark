@@ -1,0 +1,42 @@
+/* The catalog is a local reading workspace, separate from benchmark controls. */
+.prompts-section-head{margin-bottom:18px}
+.prompts-section-head button{font-size:.82rem;padding:8px 12px}
+#prompts-dialog{width:min(960px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 24px 90px #0005;overflow:hidden}
+#prompts-dialog[open]{display:flex;flex-direction:column}
+#prompts-dialog::backdrop{background:#07111fcc}
+.prompts-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 26px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.prompts-heading h2{margin:0 0 7px;font-size:1.35rem;letter-spacing:-.025em}
+.prompts-heading p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
+.prompts-heading button{flex-shrink:0}
+.prompts-body{padding:20px 26px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.prompts-filters{display:flex;gap:16px}
+.prompts-filters>div{flex:1;min-width:0}
+.prompts-filters select{font:inherit;font-size:.9rem;background:var(--surface);color:var(--text);border:1px solid var(--input-border);border-radius:6px;padding:10px;width:100%;margin-top:6px}
+.prompts-filters select:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.prompts-note{font-size:.8rem;line-height:1.6;color:var(--muted);margin:12px 0}
+.prompts-count{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 10px}
+.prompts-workspace{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:26px;align-items:start}
+.prompts-list{border-top:1px solid var(--border);max-height:420px;overflow-y:auto;overscroll-behavior:contain}
+.prompts-choice{display:flex;align-items:flex-start;gap:11px;padding:15px 10px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;transition:background .12s ease,border-color .12s ease}
+.prompts-choice:hover{background:var(--subtle)}
+.prompts-choice:has(input:checked){border-left-color:var(--accent);background:var(--subtle)}
+.prompts-choice:focus-within{outline:2px solid var(--focus);outline-offset:-2px}
+.prompts-choice input{margin:4px 0 0;accent-color:var(--primary);flex-shrink:0;width:16px;height:16px}
+.prompts-choice strong{font-size:.9rem;line-height:1.4;display:block;font-weight:650}
+.prompts-choice-description{display:block;font-size:.81rem;line-height:1.5;color:var(--muted);font-weight:400;margin-top:4px}
+.prompts-choice small{display:block;font-size:.73rem;color:var(--link);font-weight:500;margin-top:8px}
+.prompts-preview{position:sticky;top:0;min-width:0}
+.prompts-preview h3{font-size:1rem;margin:0 0 8px}
+#prompts-preview-description{font-size:.85rem;color:var(--muted);line-height:1.5;margin:0 0 12px}
+#prompts-preview-text{font-family:inherit;font-size:.9rem;line-height:1.7;margin:0;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--border);background:var(--subtle)}
+.prompts-replace-warning{margin-top:16px;padding:13px;border:1px solid var(--error-border);background:var(--error-bg);border-radius:6px;color:var(--error);font-size:.84rem;line-height:1.5}
+.prompts-replace-warning p{margin:0 0 10px}
+.prompts-replace-warning label{display:flex;gap:8px;align-items:flex-start;font-size:.84rem}
+.prompts-replace-warning input{margin-top:2px}
+.prompts-footer{padding:16px 26px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:18px;background:var(--surface);flex-shrink:0}
+.prompts-footer p{margin:0;font-size:.8rem;line-height:1.5;color:var(--muted);max-width:390px}
+.prompts-actions{display:flex;gap:9px;flex-shrink:0}
+@media(max-width:650px){#prompts-dialog{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);border-radius:10px}.prompts-heading{padding:18px;gap:12px}.prompts-heading h2{font-size:1.13rem}.prompts-heading button{padding:8px 10px}.prompts-body{padding:16px 18px}.prompts-workspace{grid-template-columns:1fr;gap:22px}.prompts-preview{position:static}.prompts-list{max-height:230px}.prompts-footer{padding:13px 18px;align-items:stretch;flex-direction:column;gap:10px}.prompts-actions{justify-content:flex-end}.prompts-filters{gap:10px}.prompts-filters select{font-size:.82rem;padding:9px 5px}.prompts-filters label{font-size:.82rem}}
+@media(prefers-reduced-motion:reduce){.prompts-choice{transition:none}}
+
+.prompts-header-top{justify-content:flex-end}.prompts-guide-link{margin:8px 0 12px;font-size:.86rem}.prompts-guide-link a{color:var(--link);text-underline-offset:3px}

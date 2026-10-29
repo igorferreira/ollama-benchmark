@@ -102,6 +102,7 @@ As mensagens são texto para diagnóstico, sem códigos de erro estáveis. Um 20
 | `repetitions` | inteiro estrito | Não / 3 | 2–10; inclui a primeira execução |
 | `timeout` | inteiro estrito, segundos | Não / 180 | 10–1.800; deadline da chamada `generate`, não de todo o job |
 | `think` | booleano estrito | Não / false | Encaminhado ao Ollama |
+| `live_token_count` | booleano estrito | Não / false | Instrumenta logprobs para observar tokens de saída ao vivo, com custo de medição e compatibilidade próprios |
 
 A configuração precisa ser objeto JSON. Deduplicação preserva ordem; espaços no prompt e nos nomes não são removidos, apenas usados para checar vazio. Valores `null` explícitos não acionam defaults: são inválidos para esses campos. A configuração armazenada contém todos os campos normalizados e não conserva propriedades desconhecidas.
 
@@ -117,7 +118,9 @@ O app não valida capacidades de geração de todos os modelos, suporte a `think
   "current": null,
   "started_at": null,
   "error": null,
-  "summary": []
+  "summary": [],
+  "live": null,
+  "usage": {"completed_runs": 0, "excluded_runs": 0, "prompt_tokens": null, "tokens": null, "prompt_cached_tokens": null, "total_tokens": null}
 }
 ```
 
@@ -149,17 +152,20 @@ Campos-base sempre presentes: `model:string`, `run:integer>=1`, `phase:initial|r
 | `wall_s` | número | Duração local de `generate` até o último fragmento, antes de buscar metadados posteriores |
 | `total_s`, `load_s` | número ou null | `total_duration`, `load_duration` convertidos de ns |
 | `prompt_s`, `generation_s` | número ou null | `prompt_eval_duration`, `eval_duration` convertidos de ns |
-| `prompt_tokens` | normalmente inteiro ou null | `prompt_eval_count`, copiado sem validação adicional de tipo |
-| `prompt_cached_tokens` | normalmente inteiro ou null | `prompt_eval_cached_count`, copiado sem validação adicional de tipo |
+| `prompt_tokens` | inteiro não negativo ou null | `prompt_eval_count` final, normalizado; booleano/float/string/negativo/ausente vira null |
+| `prompt_cached_tokens` | inteiro não negativo ou null | `prompt_eval_cached_count` normalizado; subconjunto separado, sem dupla contagem |
+| `total_tokens` | inteiro não negativo ou null | Entrada+saída somente quando ambas válidas; não é total faturável |
+| `output_tokens_observed` | inteiro não negativo ou null | Entradas válidas de logprobs, apenas na opção instrumentada e enquanto a observação for completa |
+| `token_observation_status` | enum string | disabled, unavailable, matched ou mismatch no resultado; pending aparece somente no progresso |
 | `done_reason` | normalmente string | Valor do Ollama; `unknown` se ausente, sem validação adicional |
 | `response` | string, máximo 64.000 caracteres | Concatenação somente de `response`; não armazena o raciocínio |
 | `size_vram`, `size_memory` | normalmente inteiro ou null | Bytes copiados de `/api/ps` depois da geração, sem validação adicional |
 | `warning` | string; opcional | Falha ao obter memória após uma geração bem-sucedida; não invalida suas métricas |
 | `error` | string; opcional | Erro da execução; em geral a linha não possui métricas |
 
-A implementação valida e normaliza durações e `eval_count`. Os demais campos originados no Ollama dependem do formato desse serviço; o OpenAPI deixa campos copiados sem revalidação abertos para refletir esse comportamento. Não se deve inferir que `size_vram/size_memory` equivale a utilização percentual ou backend GPU.
+A implementação valida e normaliza durações, `eval_count` e os contadores finais de entrada/cache. Os demais campos originados no Ollama dependem do formato desse serviço; o OpenAPI deixa campos copiados sem revalidação abertos para refletir esse comportamento. Não se deve inferir que `size_vram/size_memory` equivale a utilização percentual ou backend GPU.
 
-Geração cancelada ou com timeout não exporta o texto parcial nem métricas parciais acumuladas no cliente. Os resultados de outras execuções permanecem. Na conclusão normal, existe uma linha por combinação modelo/execução. Falha global ou cancelamento pode deixar a fila incompleta.
+Geração cancelada ou com timeout não transforma texto parcial em métricas finais da linha. A SDD-003 preserva a última prévia incompleta no campo volátil `live` e, portanto, na exportação JSON do snapshot; CSV não contém esse texto. Os resultados de outras execuções permanecem. Na conclusão normal, existe uma linha por combinação modelo/execução. Falha global ou cancelamento pode deixar a fila incompleta.
 
 ### 3.4 Resumo `Summary`
 
@@ -262,7 +268,7 @@ JSON exporta o snapshot completo do estado, sem envelope adicional, com `ensure_
 CSV UTF-8 com BOM, cabeçalho e finais de linha do writer padrão. Ordem exata:
 
 ```text
-model,run,phase,status,loaded_before,tokens,tokens_per_s,first_content_s,first_text_s,wall_s,total_s,load_s,prompt_tokens,prompt_cached_tokens,prompt_s,generation_s,done_reason,size_vram,size_memory,error,started_at,prompt,num_predict,num_ctx,repetitions,timeout,think
+model,run,phase,status,loaded_before,tokens,tokens_per_s,first_content_s,first_text_s,wall_s,total_s,load_s,prompt_tokens,prompt_cached_tokens,total_tokens,output_tokens_observed,token_observation_status,prompt_s,generation_s,done_reason,size_vram,size_memory,error,started_at,prompt,num_predict,num_ctx,repetitions,timeout,think,live_token_count
 ```
 
 Uma linha por execução registrada, inclusive falhas/cancelamento. Campos ausentes e null viram célula vazia; booleanos são escritos como `True`/`False`, números com ponto decimal. O texto gerado e `warning` não entram no CSV. Campos string começando por `=`, `+`, `-`, `@`, tab, CR ou LF recebem apóstrofo inicial para reduzir interpretação como fórmula; não é exportação textual byte a byte do original. Vírgulas, aspas e quebras são escapadas pelo módulo `csv`.
@@ -287,6 +293,50 @@ Sem testes dedicados atuais para todos os limites de byte/caractere, valores de 
 
 ## PWA e recursos estáticos adicionais
 
-A SDD-002 adiciona `GET /pwa.js`, `/sw.js`, `/offline.html`, `/manifest.webmanifest` e os cinco arquivos em `/icons/` listados no contrato OpenAPI. O manifesto usa `application/manifest+json`; PNG usa `image/png`; SVG usa `image/svg+xml`; scripts usam `text/javascript`. Todos preservam Host/Origin e headers de segurança/no-store. Apenas a página `/` recebe substituição do token. O service worker usa o cache `ollama-benchmark-static-v1` para oito recursos públicos, sem HTML principal, API, POST, exportação ou dados de teste. A página offline não contém token. Assets com query não são interceptados para cache; atualizações do worker removem somente versões antigas do cache com prefixo próprio.
+A SDD-002 adiciona `GET /pwa.js`, `/sw.js`, `/offline.html`, `/manifest.webmanifest` e os cinco arquivos em `/icons/` listados no contrato OpenAPI. O manifesto usa `application/manifest+json`; PNG usa `image/png`; SVG usa `image/svg+xml`; scripts usam `text/javascript`. Todos preservam Host/Origin e headers de segurança/no-store. Apenas a página `/` recebe substituição do token. A SDD-003 atualiza o service worker para o cache `ollama-benchmark-static-v3` com dez recursos públicos, incluindo FAQ e script de ajuda/tema, sem HTML principal, API, POST, exportação ou dados de teste. A página offline não contém token. Assets com query não são interceptados para cache; atualizações do worker removem somente versões antigas do cache com prefixo próprio.
 
 O botão de instalação depende de `beforeinstallprompt`; sua ausência não é falha do benchmark. O endereço loopback fornece contexto seguro. A instalação não cria serviço de sistema e não fornece inferência offline.
+
+## 12. SDD-003: progresso, contagem observada e FAQ
+
+`GET /api/state` e JSON exportado acrescentam `live` (null ou objeto da tentativa mais recente) e `usage` (acumulado somente das linhas completed). Schema completo: `LiveProgress` e `Usage` em [OpenAPI](openapi.yaml). `current` continua identificando a tentativa; `live` pode permanecer depois de sua conclusão para mostrar o resultado ou a prévia incompleta.
+
+`live` contém `model`, `run`, `status` (waiting/streaming/completed/failed/cancelled), `elapsed_s`, `response` limitado a 64 mil caracteres, `output_characters`, `thinking_characters`, `fragments`, `first_content_s`, `first_text_s`, os quatro contadores finais (`tokens`, `prompt_tokens`, `prompt_cached_tokens`, `total_tokens`), `count_status` (pending/final/unavailable), `output_tokens_observed` e `token_observation_status`.
+
+O cliente publica callback inicial, primeiro conteúdo, atualizações com intervalo mínimo aproximado de 250 ms e último snapshot relevante. Manager combina publicação sob lock e cronômetro monotônico derivado no snapshot. Enquanto aguarda GET ps antes de iniciar generate, o relógio da inferência ainda não começou. A UI consulta aproximadamente a cada 700 ms; não há SLA de atualização ou SSE/WebSocket.
+
+Sem instrumentação, os contadores finais ficam null durante o stream. `live_token_count=true` acrescenta ao payload Ollama `logprobs:true` e `top_logprobs:0`. Cada entrada válida de metadata precisa ser um objeto com token string e logprob numérico finito, sem booleanos. A aplicação soma entradas, não fragmentos, e não guarda seus tokens/probabilidades/bytes. Metadata ausente ou malformada em conteúdo invalida a observação completa daquela tentativa; o progresso textual continua, sem retry.
+
+`output_tokens_observed` é provisório. No final, `eval_count` sempre determina `tokens`; o estado da observação fica matched, mismatch, unavailable ou disabled. Comparar resultados exige usar a mesma configuração de instrumentação, pois payload e processamento adicionais podem alterar a própria medição. Input/cache/total não são inferidos de caracteres ou da metadata de saída.
+
+`usage` contém completed_runs, excluded_runs e soma por contador de prompt_tokens/tokens/prompt_cached_tokens/total_tokens. Não há concluídas ou uma concluída carece daquele contador: null para essa soma. Zero numérico válido é preservado. Linhas failed/cancelled são excluídas e não representam uso faturável zero. Cache permanece separado, já faz parte da visão de entrada; nunca adicionar como um terceiro termo ao total informado.
+
+`GET /faq.html` e `/help.js` são recursos públicos estáticos, submetidos às mesmas proteções Host/Origin/CSP do mapa de assets. Não recebem token e não consultam API. Help JS inicializa tema e tooltips compartilhados; a lógica do benchmark continua em app.js. FAQ/help entram na allowlist pública do SW v3. HTML principal, APIs, app.js/pwa.js, prompts, prévias, respostas e exportações continuam fora dela.
+
+A FAQ traz definições e fórmulas educativas com fontes; não calcula faturamento ou impõe SLA universal. O acompanhamento limita-se aos testes desta instância. Casos de aceite e ownership constam da [SDD-003](changes/003-tokens-tempo-real-faq.md).
+
+## 13. SDD-004: inventário mínimo do ambiente
+
+Novo `GET /api/system` responde `SystemSnapshot`, separado de `/api/state`, `usage`, linhas e exportações do benchmark. `GET /system.js` serve a apresentação genérica. Ambos passam por Host/Origin/Fetch-Site/CSP/no-store comuns; a API não aceita caminhos/comandos nem tem opção de burlar o intervalo. Sem coletor injetado ou em erro inesperado da borda, responde 503 JSON genérico, sem str da exceção/caminho privado.
+
+`app.main` constrói `SystemCollector` e injeta como terceiro argumento opcional em `AppServer(address, manager, system_info=None)`. Fixtures antigas sem coletor não inspecionam incidentalmente o ambiente por visitar a nova API; recebem 503. `BenchmarkManager.is_active()` consulta running/cancelling sob lock breve, e o transporte chama snapshot fora desse lock.
+
+Schema exato e unidades no OpenAPI: collected_at UTC ou null; environment(kind/scope/note); os(name/kernel/architecture); cpu(model/physical_cores/logical_cpus/scope); gpu(models/scope/note); memory(total_bytes/used_bytes/available_bytes/scope); disk(total_bytes/used_bytes/scope); uptime_seconds/uptime_scope; refresh(min_interval_s=10/paused/stale). Bytes e contagens são inteiros não negativos ou null. Nomes são strings imprimíveis limitadas a 256 caracteres; GPU até 16 modelos. Não existem campos de usuário, host, IP/MAC, serial, UUID, mount, caminho privado, arquivo ou lista de pacotes.
+
+Fatos estáticos são normalizados por allowlist uma vez por instância. Dados dinâmicos têm no mínimo dez segundos entre tentativas, mesmo após falha. Snapshot é cópia em memória. Durante coleta concorrente, outros pedidos recebem o snapshot anterior marcado stale; I/O não segura lock do coletor ou manager. Durante benchmark ativo, nenhuma nova coleta dinâmica inicia e o retorno fica paused/stale; sem snapshot anterior, valores dinâmicos são desconhecidos e collected_at é null. O timestamp permanece o da última coleta dinâmica bem-sucedida.
+
+Fontes Linux: os-release, release do kernel, arquitetura pontual de uname.machine, campos de CPU e topologia/afinidade visíveis, DRM/sysfs/base PCI local opcional, meminfo, cgroups v1/v2 conhecidos e uptime do kernel. Base PCI ausente não é dependência faltante: o modelo GPU pode permanecer desconhecido. A busca de cgroup é limitada e usa o menor limite finito conhecido entre candidato/ancestrais; used/available pertencem ao escopo desse limite, não são necessariamente consumo exclusivo do processo do app.
+
+Fontes Windows: rótulo Windows com kernel/build conhecido, CPU por campo de registro restrito, modelos de display por EnumDisplayDevicesW e arquitetura por IsWow64Process2/fallback explícito. GlobalMemoryStatusEx usa estrutura de 64 bytes com DWORD de 32 bits e contadores de 64 bits e dwLength inicializado; GetTickCount64 tem restype uint64. Fixtures Linux simulam essas APIs, sem equivaler a homologação Windows.
+
+Escopos de API são identificadores técnicos e são traduzidos pela interface: cpu process_visible_not_exclusive/process_visible_shared_kernel; gpu process_visible/container_visible; memory system_memory/cgroup_limit/container_limit_unknown; disk app_filesystem; uptime kernel/shared_kernel; unknown quando indisponível. O campo environment.scope é backend_process. No Docker, capacidade de host não comprovável fica null, não é inferida de memória física visível. Kernel/CPU podem ser compartilhados; GPU não exposta não prova ausência física nem indica o backend usado pelo Ollama. O alvo Ollama é um sistema externo e não é inventariado.
+
+O frontend faz fetch no-store a cada dez segundos quando o app está ocioso, limitado pelo servidor também no botão Atualizar. Evento benchmark-status informa apenas active; pausa timer e aborta fetch de inventário durante teste, retomando com throttle. O painel não prende foco e oferece hover/foco/toque/clique/Escape. Barra de RAM exige valores conhecidos e capacidade positiva; desconhecido nunca vira barra de 0%. Inventário não persiste em localStorage, Cache Storage ou arquivos, nem aparece nas exportações do benchmark. SW v3 continua guardando dez recursos públicos anteriores; system.js e api/system ficam fora da allowlist.
+
+Detalhes e critérios: [SDD-004](changes/004-resumo-ambiente-dinamico.md). Há teste sintético de Windows e execução real deve ser explicitamente diferenciada na matriz; não afirmar suporte validado apenas pela existência do código.
+
+## Biblioteca de pedidos e hostname
+
+`GET /prompts.js` e `GET /prompts.css` são assets estáticos da whitelist, com as mesmas proteções HTTP/CSP e no-store; ficam fora da allowlist SW v3. Não há endpoint novo de inferência. O catálogo local tem 18 IDs únicos e as seis células tipo × complexidade. O dialog fica fora do formulário; controles não submetem benchmark. Substituir edição exige confirmação, revalidada no clique; evento benchmark-status e textarea.disabled bloqueiam abrir/aplicar.
+
+`SystemSnapshot.hostname` é string limitada a 256 caracteres imprimíveis ou null, obtida por socket.gethostname uma vez por instância, sem DNS/FQDN. A origem acompanha environment.kind: container não significa hostname físico. Não participa do estado/exports do benchmark, logs nem cache. A exposição local é exceção autorizada documentada na SDD-006.

@@ -4,7 +4,7 @@ Baseline documental: 28/10/2026. Relaciona [SDD](sdd.md), código atual e testes
 
 ## 1. Catálogo da suíte automatizada
 
-Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte refatorada contém **27 métodos** (24 preservados, um smoke da composição CLI e dois cenários PWA), usa somente Python stdlib e HTTP simulado em loopback. Um método pode conter vários subcasos; A quantidade de métodos não representa porcentagem de cobertura.
+Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte atual contém **82 métodos**: 77 preservados até a SDD-004, um teste adicional de hostname e quatro da biblioteca de pedidos. Um método pode conter vários subcasos; a quantidade de métodos não representa porcentagem de cobertura.
 
 | ID | Nome exato | O que demonstra |
 | --- | --- | --- |
@@ -33,9 +33,63 @@ Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`
 | T23 | `AppTests.test_ollama_offline_returns_clear_error` | Indisponibilidade do Ollama vira erro 502 claro |
 | T24 | `AppTests.test_end_to_end_job_and_exports` | Fluxo HTTP start/state e exportações CSV/JSON |
 | T25 | `CliTests.test_cli_starts_composition_root_without_ollama` | Subprocesso pela entrada app.py, porta efêmera, health e asset sem Ollama disponível |
-
 | T26 | `AppTests.test_pwa_manifest_and_binary_icons` | Manifesto instalável e dimensões/assinatura MIME dos ícones PNG |
 | T27 | `AppTests.test_pwa_assets_preserve_origin_and_token_boundaries` | Assets PWA sem token, origem/CSP preservadas e caminhos não autorizados rejeitados |
+| T28 | `TokenUsageTests.test_live_count_option_is_strict_and_disabled_by_default` | Opção booleana estrita e desligada por padrão |
+| T29 | `TokenUsageTests.test_cache_is_separate_from_input_plus_output` | Cache separado da soma entrada+saída |
+| T30 | `TokenUsageTests.test_missing_invalid_and_zero_counters` | Ausência, valores inválidos e zero preservam semântica |
+| T31 | `TokenUsageTests.test_accumulated_usage_excludes_failed_and_cancelled` | Acumulado exclui linhas falhas e canceladas |
+| T32 | `TokenUsageTests.test_missing_counter_does_not_silently_become_zero` | Contador ausente não vira zero silenciosamente |
+| T33 | `TokenUsageTests.test_csv_contains_total_without_changing_old_columns` | CSV inclui total, opção e conferência sem remover colunas antigas |
+| T34 | `LiveClientTests.test_logprob_entries_not_chunks_count_observed_tokens` | Cinco entradas em dois fragmentos produzem cinco tokens observados |
+| T35 | `LiveClientTests.test_logprob_mismatch_keeps_final_authoritative` | Divergência preserva autoridade do contador final |
+| T36 | `LiveClientTests.test_missing_or_malformed_logprobs_invalidates_attempt` | Metadata ausente, vazia ou malformada invalida observação completa |
+| T37 | `LiveClientTests.test_unsupported_logprobs_fails_without_retry` | API incompatível falha sem repetir inferência |
+| T38 | `LiveClientTests.test_cancelled_observation_is_not_presented_as_a_final_count` | Cancelamento não apresenta observação provisória como total final |
+| T39 | `LiveClientTests.test_disabled_observation_does_not_change_payload` | Opção desligada mantém payload sem logprobs |
+| T40 | `LiveClientTests.test_progress_stays_pending_until_authoritative_final` | Progresso permanece sem contadores finais até done |
+| T41 | `LiveClientTests.test_fast_chunks_throttled_but_last_preview_published` | Publicações limitadas com última prévia garantida |
+| T42 | `LiveClientTests.test_preview_bounded_and_reasoning_only_counted` | Prévia limitada e raciocínio contado sem preservar seu texto |
+| T43 | `LiveClientTests.test_error_publishes_last_incomplete_preview_without_tokens` | Erro publica última prévia incompleta sem tokens finais |
+| T44 | `LiveClientTests.test_manager_partial_snapshot_precedes_done_and_clock_advances` | Snapshot parcial antes de done e cronômetro avançando |
+| T45 | `LiveClientTests.test_cancel_retains_incomplete_preview_and_new_job_resets` | Cancelamento preserva prévia incompleta; novo teste limpa estado |
+| T46 | `FaqTests.test_faq_public_without_ollama_token_or_api_script` | FAQ pública sem Ollama, token ou script de API |
+| T47 | `FaqTests.test_faq_anchors_assets_and_shared_theme` | Âncoras, assets e tema compartilhado |
+| T48 | `FaqTests.test_faq_and_help_keep_local_http_boundary` | FAQ/helper preservam Host/Origin/CSP locais |
+| T49 | `FaqTests.test_cache_contains_only_explicit_public_resources` | Cache contém somente recursos públicos explicitamente permitidos |
+| T50 | `FaqTests.test_help_labels_and_preview_do_not_remove_form_accessibility` | Ajuda e prévia preservam rótulos e acessibilidade do formulário |
+| T51 | `SystemFixtureTests.test_distinct_instances_use_their_own_static_facts` | Instâncias distintas usam seus próprios fatos, sem inventário fixo |
+| T52 | `SystemFixtureTests.test_malformed_static_sources_fall_back_to_unknown` | Fonte estática/seções/modelos malformados resultam em desconhecido |
+| T53 | `SystemFixtureTests.test_static_source_read_once_and_dynamic_throttled` | Fatos estáticos uma vez e dados dinâmicos com throttle |
+| T54 | `SystemFixtureTests.test_busy_without_previous_snapshot_does_not_collect` | Teste ativo sem snapshot não inicia coleta |
+| T55 | `SystemFixtureTests.test_busy_preserves_previous_snapshot_and_refreshes_afterward` | Pausa preserva snapshot e retomada atualiza depois do intervalo |
+| T56 | `SystemFixtureTests.test_dynamic_collection_does_not_hold_collector_lock` | I/O dinâmico não segura lock do coletor |
+| T57 | `SystemFixtureTests.test_failures_keep_unknown_distinct_from_zero_and_throttle_retries` | Falha/zero/ausência distintos e novas tentativas limitadas |
+| T58 | `SystemFixtureTests.test_extra_identifiers_are_not_serialized_or_persisted` | Campos extras de identificação não são serializados/persistidos |
+| T59 | `LinuxSourceTests.test_linux_static_uses_whitelisted_model_and_optional_pci_names` | Linux usa campos de modelo permitidos e base PCI opcional |
+| T60 | `LinuxSourceTests.test_native_memory_and_uptime_units` | Unidades de RAM e uptime Linux |
+| T61 | `LinuxSourceTests.test_container_without_limit_or_device_does_not_invent_host_capacity` | Container sem limite/dispositivo não inventa capacidade de host |
+| T62 | `LinuxSourceTests.test_cgroup_v2_uses_lowest_known_ancestor_limit` | Cgroup v2 respeita menor limite ancestral conhecido |
+| T63 | `LinuxSourceTests.test_cgroup_v1_and_unlimited_sentinel` | Cgroup v1 e sentinela de limite não definido |
+| T64 | `LinuxSourceTests.test_inconsistent_memory_and_missing_sources_stay_unknown` | Memória inconsistente/fontes ausentes permanecem desconhecidas |
+| T65 | `WindowsSourceTests.test_memory_structure_and_uptime_use_64_bit_api` | Windows estrutura/API de memória e uptime em 64 bits |
+| T66 | `WindowsSourceTests.test_windows_registry_and_display_sources_return_only_model_labels` | Registro/display Windows retornam somente rótulos de modelo |
+| T67 | `WindowsSourceTests.test_windows_architecture_from_native_machine_api` | Arquitetura Windows por API nativa simulada |
+| T68 | `WindowsSourceTests.test_windows_static_fixture_and_safe_failures` | Fixtures Windows e falhas seguras |
+| T69 | `SystemHttpTests.test_system_endpoint_no_store_and_outside_benchmark_exports` | Endpoint no-store e inventário separado de exportações |
+| T70 | `SystemHttpTests.test_dynamic_source_runs_outside_manager_lock` | Coleta dinâmica fora do lock do manager |
+| T71 | `SystemHttpTests.test_busy_route_uses_cached_data_without_io_under_manager_lock` | Endpoint pausado reutiliza snapshot sem I/O sob managerlock |
+| T72 | `SystemHttpTests.test_unexpected_collector_exception_is_generic_and_private` | Exceção inesperada vira erro genérico sem detalhe privado |
+| T73 | `SystemHttpTests.test_host_origin_and_absent_collector` | Host/Origin rejeitados e coletor ausente retorna 503 |
+| T74 | `SystemUiTests.test_environment_strip_placeholders_and_accessible_details` | Faixa com placeholders e detalhes acessíveis |
+| T75 | `SystemUiTests.test_system_script_is_separate_public_and_not_on_faq` | Script de sistema separado e ausente da FAQ |
+| T76 | `SystemUiTests.test_inventory_is_never_added_to_public_cache_or_benchmark_export` | Inventário não entra no cache público ou exportação |
+| T77 | `SystemUiTests.test_public_script_preserves_origin_and_payload_boundaries` | Asset público mantém origem e apresentação por textContent |
+| T78 | `SystemFixtureTests.test_requested_hostname_is_sanitized_and_failure_is_unknown` | Hostname sintético sanitizado, limitado e nullable em falha |
+| T79 | `PromptTests.test_catalog_has_eighteen_unique_synthetic_examples_in_six_cells` | Catálogo de 18 exemplos, cobertura de seis células e conteúdo público |
+| T80 | `PromptTests.test_dialog_is_outside_benchmark_form_and_controls_are_labelled` | Dialog fora do formulário, labels, posição do botão e cabeçalho |
+| T81 | `PromptTests.test_assets_keep_csp_host_origin_and_no_token_boundary` | Assets com CSP/Host/Origin/no-store, sem token |
+| T82 | `PromptTests.test_catalog_never_uses_inference_persistence_or_offline_cache` | Sem inferência/persistência/cache do catálogo |
 
 ## 2. Evidências executadas e disponibilidade
 
@@ -65,7 +119,7 @@ A SDD-002 adicionou T26 e T27. Suíte no host: 27 testes em 12,760 s; agente QA 
 | RF-02 | `validate_settings`; formulário e coleta dos campos no JS | T04, T22; E04 | Subconjunto de limites testado, não todas as bordas |
 | RF-03 | `BenchmarkManager.start/_run`; `OllamaClient.generate` | T08, T15; E02/E03 | Não isola outros clientes do Ollama |
 | RF-04 | `seconds`, `metrics`, relógio/stream em `generate` | T01–T03, T08, T10; E02/E03 | Não mede GPU; TTFT é do cliente Python |
-| RF-05 | `snapshot`; `render`, `poll` no JS; tabelas HTML | T24; E04 | Teste Python não executa JavaScript; UI atualiza linhas completas, sem tokens parciais |
+| RF-05 | `snapshot`; `render`, `poll` no JS; tabelas HTML | T24; E04 | Teste Python não executa JavaScript; Linhas finais continuam completas; SDD-003 acrescenta prévia e observação opcional separadas |
 | RF-06 | `summarize`; tabela de resumo | T06; E02/E04 | Repetida não garante carregamento/cache quente; valores null podem reduzir amostra por métrica |
 | RF-07 | `BenchmarkManager.cancel`; `OllamaClient.cancel`; botão/POST | T11, T17; E03 | Não garante liberação imediata de GPU ou cancelamento global de metadados |
 | RF-08 | Tratamento por linha e tratamento fatal em `_run` | T09, T10, T16, T18, T23; E03 | Caso todas as linhas falham sem teste dedicado; global completed ainda pode ocorrer |
@@ -73,9 +127,14 @@ A SDD-002 adicionou T26 e T27. Suíte no host: 27 testes em 12,760 s; agente QA 
 | RF-10 | `main`, `AppServer`; Dockerfile e ambos Compose | T19/T24; E04/E06 | Windows/Desktop não executados; health somente app |
 | RF-11 | GET ps antes/depois de `generate`, campos loaded_before/size_* | T15; E02/E03 | Warning posterior e falha de metadados sem teste próprio |
 | RF-12 | `validate_settings`, payload think e campos HTML/JS | T04/T08; E02 | Raciocínio simulado; integração com think=true e modelo compatível não executada |
-| RF-13 | IIFE do tema e listeners em `web/app.js`; seletor HTML; variáveis em CSS | T19; E05 | Comportamento do navegador não é coberto pela suíte Python; sem opção Sistema/reset |
-
+| RF-13 | IIFE do tema e listeners em `web/help.js`; seletor HTML; variáveis em CSS | T19; E05 | Comportamento do navegador não é coberto pela suíte Python; sem opção Sistema/reset |
 | RF-14 | `web/pwa.js`, `web/sw.js`, manifesto, ícones e `STATIC_ASSETS` | T26/T27; SDD-002 | Instalação depende do navegador; requer servidores ligados; Cache Storage não inclui dados de benchmark |
+| RF-15 | `OllamaClient.generate(progress=...)`, `BenchmarkManager.snapshot`, painel live | T34–T45; SDD-003 | Atualização por polling; tokens gerais somente finais; observado opcional via metadata |
+| RF-16 | `token_count`, `metrics`, `usage`, CSV, painéis de contadores | T28–T33/T35/T36; SDD-003 | Acumulado só completed; não é fatura ou monitor global |
+| RF-17 | `/faq.html`, `/help.js`, allowlist SWv2 | T46–T49 | FAQ pública sem API/token; consulta offline requer cache anterior |
+| RF-18 | Tooltips compartilhados em help.js, labels e foco | T50; navegador a validar nesta entrega | Teste HTTP não substitui interação real com mouse/teclado/toque |
+| RF-19 | `SystemCollector`, composição e `/api/system`; `web/system.js` | T51–T58/T59–T68/T69/T75 | Ambiente do backend; não inventário do host/Ollama; Windows real ainda não executado |
+| RF-20 | `snapshot(busy=...)`, `manager.is_active`, faixa/painel e evento benchmark-status | T53–T57/T70/T71/T74; E10 | Snapshot timestamp/throttle; inspeção de browser cobre interação além do teste estático |
 
 ## 4. Requisitos não funcionais
 
@@ -88,6 +147,7 @@ A SDD-002 adicionou T26 e T27. Suíte no host: 27 testes em 12,760 s; agente QA 
 | RNF-05 | Manager lock/event, start rejeitado, finalização atômica, snapshot por deepcopy | T14/T15/T17/T18 | Implementado; estado único compartilhado, sem transações persistidas |
 | RNF-06 | Labels, estados/alertas, foco, rolagem em tabela, tema | T19; E04/E05 | Validação localizada; sem auditoria completa WCAG, leitores de tela ou matriz de navegadores |
 | RNF-07 | Pathlib/stdlib, recursos locais, comandos Windows/Linux, Compose separado | E01/E06; inspeção | Linux executado; Windows e Docker Desktop continuam não verificados |
+| RNF-08 | Allowlist de campos, fontes fixas/injetáveis, cópia volátil e API separada | T58/T69/T72/T73/T76/T77 | Não há inventário em cache/exportações; fatos combinados ainda podem formar fingerprint |
 
 ## 5. Regras de negócio
 
@@ -148,3 +208,84 @@ A [especificação da mudança](changes/001-separacao-responsabilidades.md) foi 
 | AC-SRP-07 | Gates independentes QA → review e segurança separado | E07: QA e revisão aprovados; segurança e publicação possuem auditoria própria do pacote versionado |
 
 O responsável da entrega comparou AST do snapshot anterior com os módulos refatorados: nove símbolos foram preservados sem alteração de lógica; os dois alterados foram `main` e `AppServer`, nos pontos previstos de composição/injeção. Essa inspeção é evidência estrutural complementar, não substitui a execução da suíte ou integração real.
+
+## 9. Mudança SDD-003 e cobertura específica
+
+Os testes T28–T45 estão em `tests/test_live.py`; T46–T50 em `tests/test_faq.py`. Os nomes exatos acima foram extraídos dos métodos reais, sem alegar cobertura integral da UI pelo Python.
+
+| Critério | Testes principais | Observação |
+| --- | --- | --- |
+| AC-RT-01 | T40/T44 | Snapshot parcial antes de done, sem converter fragmentos em tokens |
+| AC-RT-02 | T29/T30/T34–T36 | Entrada/saída/cache/total, metadata por token e reconciliação final |
+| AC-RT-03 | T31/T32 | Falhas/cancelamentos fora do acumulado; ausência não vira zero |
+| AC-RT-04 | T37/T38/T43–T45 e suíte anterior de deadline/cancelamento | Sem retry em incompatibilidade; preservação/reset de prévia |
+| AC-RT-05 | T41/T42 | Throttle e última publicação; limite de prévia e raciocínio sem texto persistido |
+| AC-RT-06 | T46–T49 | Assets públicos e cache sem token/API/dados |
+| AC-RT-07 | T50 e validação de navegador desta entrega | Interação real/contraste/layout não são certificados pelo parse de HTML |
+| AC-RT-08 | Gate final desta entrega | QA independente, review posterior e segurança separado; sem commit/publicação nesta tarefa |
+
+### E08 — SDD-003, validação de 29/10/2026
+
+QA independente: **50 testes aprovados em 19,866 s**, exit 0, sem ResourceWarning. Review posterior independente: **APROVADO**, sem alteração de arquivos. Essa aprovação pertence ao código novo, não foi herdada da baseline.
+
+A raiz executou integração real no Docker Linux com `qwen3:4b`, opção instrumentada ligada e duas saídas de 128 tokens. Capturou 202 snapshots: antes de done havia saída observada positiva com contadores finais ainda null; no fim ambos resultados tiveram observed 128=eval_count 128 e status matched. Entrada 34 / saída 128/total 162 por resultado; acumulado 68/256/324, cache null quando ausente. Uma observação visual durante o stream mostrou 79 tokens observados e prévia de 370 caracteres, sem copiar o texto gerado para esta documentação.
+
+Navegador confirmou hover, foco de teclado, Escape e toque com tooltip dentro da viewport 375×812 sem overflow; FAQ com 16 perguntas sem token ou campo de prompt; layouts em três viewports e dois temas. Os cenários automatizados conferem dez assets públicos no cache e exclusão de raiz/API/token/dados; o snapshot de segurança é coordenado pela raiz.
+
+Artefato de contadores/snapshots sem texto: `test-results/live-faq-real.json` (local, ignorado, não distribuído). Não há homologação Windows/Docker Desktop, monitoramento global de uso ou auditoria de cobrança de terceiros.
+
+### E09 — FAQ offline e recuperação
+
+Depois de preservar exportações locais e parar efetivamente o container do app, a raiz recarregou a FAQ controlada pelo service worker: 16 perguntas, tema escuro e ausência de token da sessão. A navegação fez somente três GETs públicos de FAQ, helper e CSS, sem chamadas de API. Cache v2 confirmado com dez recursos públicos e nenhuma raiz/API. Após restaurar o Compose, health e formulário do app voltaram. Esse ensaio não significa benchmark offline: gerar continua exigindo app e Ollama disponíveis.
+
+## 10. Mudança SDD-004: inventário e visual
+
+T51–T73 pertencem a `tests/test_system.py`; T74–T77 a `tests/test_system_ui.py`. Todas as fixtures de hardware usadas por esses testes são sintéticas, sem copiar a configuração pessoal de um exemplo.
+
+| Critério | Testes principais / evidência |
+| --- | --- |
+| AC-SYS-01 | T51/T53, instâncias/fontes diferentes |
+| AC-SYS-02 | T52/T57/T59/T60/T64–T68 |
+| AC-SYS-03 | T61–T63; comparação real de modos da E10 |
+| AC-SYS-04 | T53–T56/T70/T71; pausa real durante running na E10 |
+| AC-SYS-05 | T58/T69/T72/T73/T76/T77 |
+| AC-SYS-06 | T74 e verificação visual/interação real da E10 |
+| AC-SYS-07 | Suíte completa de 77 testes, QA independente e fechamento da entrega; Windows somente fixtures |
+
+### E10 — Resumo dinâmico do ambiente, 29/10/2026
+
+QA independente executou 77 testes com ResourceWarning como erro: todos passaram. Os workers verificaram 23 testes de sistema em 2,526 s e quatro de UI em 0,519 s; estes checks não substituem o gate independente da suíte completa. Auditoria de segurança separada registrou 27 cenários SYS aprovados e scanner sem achados em 57 candidatos/53 textos; evidências detalhadas são locais/ignoradas, não dados pessoais distribuídos com o código.
+
+A raiz comparou o app em Docker e uma instância nativa: rótulos/escopos distintos, API no-store, intervalo mínimo de dez segundos, inventário ausente das exportações e Origin inválida rejeitada. Docker apresentou RAM/GPU desconhecidas onde não comprováveis, sem inventar host; o modo nativo apresentou os campos conhecidos do ambiente real. Nenhum valor pessoal desse inventário é reproduzido nesta matriz.
+
+Durante benchmark real em running, a raiz confirmou resposta com paused=true e timestamp/RAM anteriores preservados. A coleta não é monitor global nem prova que a GPU indicada executa o modelo.
+
+Visual e interação foram conferidos em 375/768/1280 px nos temas claro/escuro: sem overflow, hover/foco/Escape, clique mobile e Fechar, com painel legível. Capturas são locais ignoradas. Windows/Docker Desktop não foram executados; fixtures de ctypes/registro não homologam uma instalação Windows real.
+
+## SDD-005/006 — Biblioteca e identificação local
+
+| Requisito/aceite | Código | Verificação e limite |
+| --- | --- | --- |
+| RF-21 / AC-PROMPT-01/02 | web/prompts.js catálogo, renderList e preview | T79/T80; filtros/seleção/empty state também exigem navegador |
+| RF-22 / AC-PROMPT-03/04/05 | controls, needsConfirmation, handler apply e benchmark-status | T80/T82 verificam fronteiras estáticas; proteção de edição e bloqueio dinâmico exigem navegador |
+| AC-PROMPT-06 | dialog nativo e prompts.css | T80; teclado, mobile e temas exigem navegador |
+| AC-PROMPT-07 | STATIC_ASSETS e SW v3 | T81/T82, T26/T27/T49 |
+| RF-23 / AC-HOST-01/02 | _hostname, SystemCollector, system.js | T78 e inspeção navegador; hostname fixture example-host, nunca inventário real versionado |
+| AC-HOST-03 | header index.html | T80 e inspeção visual |
+| AC-HOST-04 / AC-PROMPT-08 | isolamento manager/cache e gates | T58/T69/T72/T81/T82; QA automatizado e navegador aprovados; revisão final independente APROVADA |
+
+Os testes novos não substituem testes comportamentais reais do dialog. Windows real continua não executado. A identificação técnica local da SDD-006 é exceção autorizada à baseline que excluía hostname; não autoriza demais identificadores, coleta remota ou publicação de inventário.
+
+### E11 — Biblioteca de pedidos e hostname, 29/10/2026
+
+Suíte de desenvolvimento: 82 testes aprovados em 23,480 s com ResourceWarning como erro. QA independente automatizado: 82 aprovados em 23,404 s; sintaxe JS e diff limpos, 42 referências OpenAPI resolvidas e 82 métodos na matriz. Auditoria de segurança separada: 62 candidatos/58 textos sem achados, testes de biblioteca/SYS aprovados.
+
+A raiz validou em navegador os 18 pedidos e seis células, filtros, prévia, confirmação de substituição, invalidação da confirmação após edição, bloqueio durante teste e corrida local, Escape/restauração de foco, parâmetros preservados e nenhuma chamada de início de benchmark por navegação/aplicação. Em 375/768/1280 px nos dois temas, não houve overflow e as ações permaneceram visíveis. Botão alinhado ao h2 à direita, guia sob o título e eyebrow removido.
+
+Hostname foi exibido nos detalhes com rótulo do container; a coleta nativa correspondeu à fonte local sem reproduzir o identificador em evidência pública. Continua fora de exportações/cache/logs. Relatórios e capturas são locais ignorados. Windows real e toque físico não executados. QA final independente **APROVADO** com as evidências automatizadas e de navegador acima; revisão posterior independente APROVADA.
+
+A revisão identificou um conflito real de Escape: painéis/ajudas atrás do dialog podiam consumir a tecla antes do fechamento modal. Corrigidos os dois handlers globais de `system.js` e `help.js` para ceder a `dialog[open]`; revisão agrupada dos cinco módulos de UI não encontrou outro conflito. Revalidação independente: suíte 82/82 em 23,417 s após o ajuste SYS; após a última guarda de ajuda, FAQ cinco testes em 0,543 s e SYS UI quatro em 0,517 s, além de sintaxe de todos os scripts e diff limpos. A validação dirigida evita repetir toda a suíte por uma guarda isolada e não implica novos testes Windows.
+
+No build final, a raiz abriu simultaneamente painel SYS fixado, tooltip por hover e biblioteca por Enter: o primeiro Escape fechou somente o dialog e devolveu foco ao botão; o segundo fechou painel/tooltip. Fluxo integral da biblioteca repetido sem inferência. QA final independente **APROVADO** após essas evidências e a revalidação dirigida.
+
+Fechamento: **QA APROVADO**, **review independente posterior APROVADO** e auditoria de segurança **APROVADA**. Nenhum commit/push ou alteração de serviço/Ollama foi feito pela equipe de implementação. Windows real permanece não executado.
