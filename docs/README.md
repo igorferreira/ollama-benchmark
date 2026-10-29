@@ -6,7 +6,7 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 
 | Documento | Finalidade |
 | --- | --- |
-| [SDD: produto, requisitos e BDD](sdd.md) | Visão, escopo, atores, 13 RF, 7 RNF, 10 regras, 9 histórias e estados |
+| [SDD: produto, requisitos e BDD](sdd.md) | Visão, escopo, atores, 14 RF, 7 RNF, 10 regras, 9 histórias e estados |
 | [Arquitetura](arquitetura.md) | C4, componentes, threads, confiança, dados, sequências e deploy |
 | [Especificação técnica](especificacao-tecnica.md) | Endpoints, schemas, unidades, erros, limites, concorrência, CLI/env e exportações |
 | [OpenAPI 3.1](openapi.yaml) | Contrato legível por ferramentas, com sintaxe JSON válida como YAML |
@@ -20,6 +20,8 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 ## Mudanças orientadas por especificação
 
 - [SDD-001 — Separação de responsabilidades](changes/001-separacao-responsabilidades.md): registro prospectivo escrito antes da refatoração, com mapeamento e critérios verificáveis.
+
+- [SDD-002 — Ícone e PWA](changes/002-pwa-icone.md): instalação, manifesto, ícones e limites de cache local.
 
 ## Decisões arquiteturais
 

@@ -28,6 +28,10 @@ flowchart LR
 
 Não há serviço de nuvem, conta, autenticação de usuário, telemetria, download de modelos ou banco de dados na arquitetura. A conexão com Ollama é feita pelo processo Python, não diretamente pelo navegador.
 
+### Extensão PWA (SDD-002)
+
+`web/pwa.js` registra `web/sw.js` e adapta o evento de instalação do navegador. `manifest.webmanifest` define identidade e ícones; `backend.http.STATIC_ASSETS` restringe as novas rotas e tipos MIME. Ícones PNG são entregues como bytes, sem decodificação de texto. O service worker persiste somente oito assets públicos, nunca HTML principal com token ou APIs. Navegações principais usam rede com fallback para `offline.html`, que explica como iniciar o servidor. Benchmarks não funcionam offline. CSP restringe imagens, manifesto e worker à mesma origem.
+
 ## 3. C4 — containers de execução
 
 Neste nível, “container” significa unidade executável no modelo C4. O servidor Python pode ou não estar em um container Docker.
@@ -78,7 +82,7 @@ flowchart LR
 | --- | --- | --- |
 | [app.main](../app.py) | Raiz de composição: ler CLI/ambiente, construir cliente → manager → servidor, abrir navegador e encerrar | `argparse`, `os`, `webbrowser`, `threading` e classes concretas do pacote backend |
 | [backend.http.AppServer](../backend/http.py) | Receber o manager já construído; possuir token da instância e conjunto de `Host` aceitos | `ThreadingHTTPServer`, `secrets` |
-| [backend.http.Handler](../backend/http.py) | Adaptar rotas, servir os três assets por mapa explícito, validar entrada HTTP e enviar respostas | `BaseHTTPRequestHandler`, `json`, `urllib.parse`, exportação CSV |
+| [backend.http.Handler](../backend/http.py) | Adaptar rotas, servir assets públicos por mapa explícito, validar entrada HTTP e enviar respostas | `BaseHTTPRequestHandler`, `json`, `urllib.parse`, exportação CSV |
 | [backend.manager.BenchmarkManager](../backend/manager.py) | Autorizar um teste por vez, preparar fila, publicar resultados e snapshots | Cliente injetado por duck typing, validação, resumo, `threading`, `copy`, `datetime` |
 | [backend.ollama.OllamaClient e Cancelled](../backend/ollama.py) | Restringir destino, chamar Ollama e ler NDJSON com medição, cancelamento e deadline | `http.client`, `socket`, `threading`, `time` e função de métricas |
 | [backend.validation.validate_settings](../backend/validation.py) | Validar tipos/limites, aplicar defaults e normalizar modelos | Biblioteca padrão, sem transporte ou estado de job |

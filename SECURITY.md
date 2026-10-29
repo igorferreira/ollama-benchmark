@@ -22,6 +22,8 @@ Use prompts sintéticos ou anonimizados e não insira senhas, chaves, dados pess
 
 O mapa de dados, retenção, controles e limites da revisão técnica relacionada à LGPD está em [PRIVACY.md](PRIVACY.md). A avaliação técnica não representa certificação jurídica de conformidade nem define a base legal dos usos do app.
 
+O service worker usa uma lista explícita de recursos públicos. A página principal com token é solicitada à rede sem persistência no Cache Storage. APIs, POSTs e exportações não são interceptados para cache. A tela offline não contém dados de testes. Instalar a PWA não expõe o serviço à internet.
+
 ## Limites de proteção
 
 A interface valida `Host`, verifica `Origin` quando presente, bloqueia requisições marcadas como entre sites e exige um token nas operações POST. Essas medidas não transformam o app em um serviço multiusuário nem protegem contra processos maliciosos que já executam no computador.

@@ -284,3 +284,9 @@ Porta de Ollama omitida usa 11434; a implementação usa `url.port or 11434`. N�
 A baseline não contém OpenAPI em runtime, versionamento de API, persistência, autenticação de usuário, histórico, importação ou servidor público. Contratos e efeitos observados acima devem orientar mudanças [spec-first](desenvolvimento.md).
 
 Sem testes dedicados atuais para todos os limites de byte/caractere, valores de CLI/env, todas as variantes de POST inválido, falha de metadados posterior à geração, lotes com todos os resultados falhos ou regressão visual automatizada. Lacunas e evidências por requisito estão em [rastreabilidade](rastreabilidade.md). Windows e Docker Desktop são alvos documentados, não plataformas já executadas nesta entrega.
+
+## PWA e recursos estáticos adicionais
+
+A SDD-002 adiciona `GET /pwa.js`, `/sw.js`, `/offline.html`, `/manifest.webmanifest` e os cinco arquivos em `/icons/` listados no contrato OpenAPI. O manifesto usa `application/manifest+json`; PNG usa `image/png`; SVG usa `image/svg+xml`; scripts usam `text/javascript`. Todos preservam Host/Origin e headers de segurança/no-store. Apenas a página `/` recebe substituição do token. O service worker usa o cache `ollama-benchmark-static-v1` para oito recursos públicos, sem HTML principal, API, POST, exportação ou dados de teste. A página offline não contém token. Assets com query não são interceptados para cache; atualizações do worker removem somente versões antigas do cache com prefixo próprio.
+
+O botão de instalação depende de `beforeinstallprompt`; sua ausência não é falha do benchmark. O endereço loopback fornece contexto seguro. A instalação não cria serviço de sistema e não fornece inferência offline.

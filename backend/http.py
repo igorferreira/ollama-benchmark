@@ -11,6 +11,20 @@ from .exports import csv_export
 
 
 WEB = Path(__file__).resolve().parent.parent / 'web'
+STATIC_ASSETS = {
+    '/': ('index.html', 'text/html; charset=utf-8'),
+    '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+    '/pwa.js': ('pwa.js', 'text/javascript; charset=utf-8'),
+    '/sw.js': ('sw.js', 'text/javascript; charset=utf-8'),
+    '/style.css': ('style.css', 'text/css; charset=utf-8'),
+    '/offline.html': ('offline.html', 'text/html; charset=utf-8'),
+    '/manifest.webmanifest': ('manifest.webmanifest', 'application/manifest+json'),
+    '/icons/icon.svg': ('icons/icon.svg', 'image/svg+xml'),
+    '/icons/icon-192.png': ('icons/icon-192.png', 'image/png'),
+    '/icons/icon-512.png': ('icons/icon-512.png', 'image/png'),
+    '/icons/maskable-512.png': ('icons/maskable-512.png', 'image/png'),
+    '/icons/apple-touch-icon.png': ('icons/apple-touch-icon.png', 'image/png'),
+}
 
 
 class AppServer(ThreadingHTTPServer):
@@ -38,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
         if filename:
             self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
         self.end_headers()
@@ -68,12 +82,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self.local_request():
             return
         url = urlsplit(self.path)
-        if url.path in {'/', '/app.js', '/style.css'}:
-            names = {'/': ('index.html', 'text/html; charset=utf-8'), '/app.js': ('app.js', 'text/javascript; charset=utf-8'), '/style.css': ('style.css', 'text/css; charset=utf-8')}
-            name, content_type = names[url.path]
-            body = (WEB / name).read_text(encoding='utf-8')
+        if url.path in STATIC_ASSETS:
+            name, content_type = STATIC_ASSETS[url.path]
+            body = (WEB / name).read_bytes()
             if url.path == '/':
-                body = body.replace('__TOKEN__', self.server.token)
+                body = body.replace(b'__TOKEN__', self.server.token.encode('ascii'))
             self.send_data(200, body, content_type)
         elif url.path == '/api/state':
             self.json(200, self.server.manager.snapshot())

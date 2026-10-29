@@ -19,7 +19,7 @@
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
   },
   "x-limitations": [
     "Origin não autentica processos locais.",
@@ -704,6 +704,264 @@
             "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
           }
         ]
+      }
+    },
+    "/pwa.js": {
+      "get": {
+        "operationId": "getPwaAsset1",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/sw.js": {
+      "get": {
+        "operationId": "getPwaAsset2",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/offline.html": {
+      "get": {
+        "operationId": "getPwaAsset3",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/manifest.webmanifest": {
+      "get": {
+        "operationId": "getPwaAsset4",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "application/manifest+json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "start_url",
+                    "scope",
+                    "display",
+                    "icons"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "short_name": {
+                      "type": "string"
+                    },
+                    "start_url": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "type": "string"
+                    },
+                    "display": {
+                      "type": "string",
+                      "enum": [
+                        "standalone"
+                      ]
+                    },
+                    "icons": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "src",
+                          "sizes",
+                          "type",
+                          "purpose"
+                        ],
+                        "properties": {
+                          "src": {
+                            "type": "string"
+                          },
+                          "sizes": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "image/png"
+                            ]
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "any",
+                              "maskable"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/icons/icon.svg": {
+      "get": {
+        "operationId": "getPwaAsset5",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/icons/icon-192.png": {
+      "get": {
+        "operationId": "getPwaAsset6",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/icons/icon-512.png": {
+      "get": {
+        "operationId": "getPwaAsset7",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/icons/maskable-512.png": {
+      "get": {
+        "operationId": "getPwaAsset8",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
+      }
+    },
+    "/icons/apple-touch-icon.png": {
+      "get": {
+        "operationId": "getPwaAsset9",
+        "summary": "Recurso público local PWA; não contém token ou dados de benchmark.",
+        "responses": {
+          "200": {
+            "description": "Asset com Host/Origin e headers comuns preservados.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host ou origem não autorizados."
+          }
+        }
       }
     }
   },

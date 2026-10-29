@@ -2,6 +2,10 @@
 
 Este runbook é público e usa somente caminhos relativos. Nenhum comando abaixo foi executado por causa da documentação. As evidências da implementação anterior são locais e não acompanham o repositório público. Consulte [validação e lacunas](rastreabilidade.md) antes de tratar uma plataforma como homologada.
 
+## Instalação PWA
+
+Abra o endereço local no Chrome/Edge. Use o botão **Instalar aplicativo** quando oferecido ou a opção de instalar no menu do navegador. Mantenha a mesma origem e porta após instalar. A instalação não inicia o Python, o Docker ou o Ollama automaticamente. Com o servidor parado, a tela offline explica a inicialização. Para remover recursos persistentes, limpe os dados do site no navegador; para desinstalar, use as opções dele. Dados de benchmark e tokens não entram no cache da PWA.
+
 ## 1. Pré-requisitos e início nativo
 
 Python 3.11+, navegador e Ollama local com modelo de geração instalado. Não é necessário `pip`, `venv`, Node, Docker ou acesso à internet para o app nativo. O app não instala nem inicia o Ollama.

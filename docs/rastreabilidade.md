@@ -4,7 +4,7 @@ Baseline documental: 28/10/2026. Relaciona [SDD](sdd.md), código atual e testes
 
 ## 1. Catálogo da suíte automatizada
 
-Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte refatorada contém **25 métodos** (24 preservados e um novo smoke da composição CLI), usa somente Python stdlib e HTTP simulado em loopback. Um método pode conter vários subcasos; A quantidade de métodos não representa porcentagem de cobertura.
+Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte refatorada contém **27 métodos** (24 preservados, um smoke da composição CLI e dois cenários PWA), usa somente Python stdlib e HTTP simulado em loopback. Um método pode conter vários subcasos; A quantidade de métodos não representa porcentagem de cobertura.
 
 | ID | Nome exato | O que demonstra |
 | --- | --- | --- |
@@ -34,6 +34,9 @@ Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`
 | T24 | `AppTests.test_end_to_end_job_and_exports` | Fluxo HTTP start/state e exportações CSV/JSON |
 | T25 | `CliTests.test_cli_starts_composition_root_without_ollama` | Subprocesso pela entrada app.py, porta efêmera, health e asset sem Ollama disponível |
 
+| T26 | `AppTests.test_pwa_manifest_and_binary_icons` | Manifesto instalável e dimensões/assinatura MIME dos ícones PNG |
+| T27 | `AppTests.test_pwa_assets_preserve_origin_and_token_boundaries` | Assets PWA sem token, origem/CSP preservadas e caminhos não autorizados rejeitados |
+
 ## 2. Evidências executadas e disponibilidade
 
 Os arquivos `TEST_RESULTS.md`, `test-results/` e relatórios locais de auditoria são **evidências locais não distribuídas no Git público**. Não existem links relativos para esses arquivos neste pacote. Operador que possui o checkout original pode consultá-los; um clone público contém o resumo abaixo e pode reproduzir os testes.
@@ -49,6 +52,10 @@ Os arquivos `TEST_RESULTS.md`, `test-results/` e relatórios locais de auditoria
 | E07 | Refatoração SDD-001: 25 testes aprovados no host em 11,230 s e dentro da imagem Docker em 11,492 s. Agente QA independente: 25 testes em 11,226 s, sem ResourceWarning; revisão final independente aprovada | Preservados os corpos e asserções dos 24 testes anteriores; adicionado teste CLI. A integração real pós-refatoração concluiu duas gerações de 32 tokens, cancelamento e exportações CSV/JSON. Navegador confirmou conexão, resultados, claro/escuro persistentes e console sem erros |
 
 A edição puramente documental não reinicia app/Ollama nem gera novas medições. A refatoração SDD-001 e a inclusão de tema são alterações de código autorizadas nesta rodada e têm validação própria; não devem ser confundidas com uma execução de benchmark motivada apenas por edição de Markdown. Publicação GitHub, auditoria de segredos e aprovação de segurança são uma etapa separada coordenada pelo responsável da entrega; este pacote não presume esse gate aprovado.
+
+### PWA — evidência de 29/10/2026
+
+A SDD-002 adicionou T26 e T27. Suíte no host: 27 testes em 12,760 s; agente QA independente: 27 testes em 13,241 s, sem ResourceWarning. No navegador Chromium de teste, o service worker foi registrado e assumiu controle; o cache continha exatamente oito recursos públicos, sem raiz ou URLs de API mesmo após GET de exportação e POST de cancelamento com conteúdo sintético. Com o container do app parado, a navegação abriu a página offline sem token ou resultados; após iniciar novamente, a página principal voltou com conexão ao Ollama. Layouts mobile/tablet/desktop e console verificados. Instalação gráfica no sistema operacional não foi executada.
 
 ## 3. Requisitos funcionais
 
@@ -67,6 +74,8 @@ A edição puramente documental não reinicia app/Ollama nem gera novas mediçõ
 | RF-11 | GET ps antes/depois de `generate`, campos loaded_before/size_* | T15; E02/E03 | Warning posterior e falha de metadados sem teste próprio |
 | RF-12 | `validate_settings`, payload think e campos HTML/JS | T04/T08; E02 | Raciocínio simulado; integração com think=true e modelo compatível não executada |
 | RF-13 | IIFE do tema e listeners em `web/app.js`; seletor HTML; variáveis em CSS | T19; E05 | Comportamento do navegador não é coberto pela suíte Python; sem opção Sistema/reset |
+
+| RF-14 | `web/pwa.js`, `web/sw.js`, manifesto, ícones e `STATIC_ASSETS` | T26/T27; SDD-002 | Instalação depende do navegador; requer servidores ligados; Cache Storage não inclui dados de benchmark |
 
 ## 4. Requisitos não funcionais
 

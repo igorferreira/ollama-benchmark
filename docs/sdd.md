@@ -110,6 +110,8 @@ O termo **deve** descreve o comportamento da baseline ou um critério para prese
 | RF-12 | A pessoa usuária deve poder habilitar ou desabilitar raciocínio no pedido de benchmark. | A aceitação dessa opção e seu efeito dependem do modelo/Ollama; rejeições são erros individuais, sem adaptação automática. |
 | RF-13 | A pessoa usuária deve poder escolher visualmente um tema claro ou escuro; o app deve manter a preferência local quando o armazenamento estiver disponível e usar o tema do sistema na ausência de preferência salva. | Extensão implementada nesta rodada, separada da baseline anterior, com validação de navegador registrada na rastreabilidade. Falha de acesso ao armazenamento não pode impedir a interface ou a escolha na página atual. |
 
+| RF-14 | A pessoa usuária deve poder instalar a aplicação local como PWA nos navegadores compatíveis, com ícone próprio, manifesto e tela offline explicativa. | Service worker guarda somente assets públicos; servidor Python e Ollama continuam necessários. Instalação gráfica Windows não validada. Ver SDD-002. |
+
 ## 6. Requisitos não funcionais
 
 | ID | Requisito | Critério e alcance |

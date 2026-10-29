@@ -14,6 +14,8 @@ Este app mede o desempenho do Ollama com prompts fornecidos pela pessoa usuária
 
 O backend não implementa histórico em banco, gravação automática de prompts/resultados, analytics ou telemetria. As mensagens de acesso HTTP estão desabilitadas. O código não implementa logs intencionais de payloads; configurações do sistema, ferramentas de diagnóstico e serviços externos continuam fora desse controle.
 
+A instalação PWA adiciona registro de service worker, manifesto e Cache Storage no navegador. O cache guarda somente a página offline, CSS, manifesto e ícones de uma lista explícita. Nunca guarda a página principal com token, APIs, prompts, respostas ou exportações. Os recursos públicos persistem até limpar os dados do site.
+
 ## Limites da execução local
 
 O navegador conversa com a API do app na mesma origem. O backend aceita somente os destinos locais previstos para o Ollama, incluindo o gateway do host no Docker. O servidor Ollama é outro processo, com configuração, modelos, eventuais integrações e política de retenção próprios. Um endpoint local não comprova que o modelo execute sem serviços externos. Confirme o uso de modelos efetivamente locais e a configuração do Ollama antes de tratar informações confidenciais.

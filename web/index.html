@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="benchmark-token" content="__TOKEN__">
 <title>Ollama Benchmark Local</title>
+<meta name="theme-color" content="#0d1624">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <script src="/app.js"></script>
+<script src="/pwa.js" defer></script>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <main>
-<header><div class="header-top"><p class="eyebrow">DESEMPENHO LOCAL</p><label class="theme-control" for="theme-select">Tema<select id="theme-select" aria-label="Tema da interface"><option value="light">Claro</option><option value="dark">Escuro</option></select></label></div><h1>Ollama Benchmark</h1><p>Compare velocidade e tempo de resposta dos seus modelos.</p></header>
+<header><div class="header-top"><p class="eyebrow">DESEMPENHO LOCAL</p><label class="theme-control" for="theme-select">Tema<select id="theme-select" aria-label="Tema da interface"><option value="light">Claro</option><option value="dark">Escuro</option></select></label></div><h1 class="app-title"><img src="/icons/icon.svg" width="56" height="56" alt="">Ollama Benchmark</h1><p>Compare velocidade e tempo de resposta dos seus modelos.</p><button id="install-app" type="button" hidden>Instalar aplicativo</button><p id="install-status" class="note" role="status">Para instalar, use a opção de instalar aplicativo no menu do Chrome ou Edge. O servidor local deve continuar ligado.</p></header>
 <section aria-labelledby="connection-title"><div class="section-head"><h2 id="connection-title">1. Conexão e modelos</h2><button id="refresh" type="button">Atualizar modelos</button></div><p id="connection" role="status">Consultando Ollama…</p><div id="models" class="models"></div></section>
 <form id="benchmark-form">
 <section aria-labelledby="settings-title"><h2 id="settings-title">2. Configure o teste</h2>

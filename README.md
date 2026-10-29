@@ -8,6 +8,14 @@ A [documentação SDD completa](docs/README.md) reúne requisitos e BDD, arquite
 
 O seletor **Tema** no topo permite **Claro** ou **Escuro**. Sem preferência salva, acompanha o sistema. A escolha é persistida no navegador quando o armazenamento está disponível; storage bloqueado não impede a troca visual.
 
+## Instalar como aplicativo (PWA)
+
+O ícone original combina um velocímetro e uma lhama estilizada. Abra **http://127.0.0.1:8765** no Chrome ou Edge e use **Instalar aplicativo**, quando o navegador disponibilizar o botão, ou a opção de instalação no menu do navegador. A aplicação instalada abre em janela própria, conforme o suporte do navegador.
+
+Mantenha o mesmo endereço e porta: `localhost` e `127.0.0.1` são origens distintas. A PWA não instala Python/Ollama nem inicia os servidores automaticamente. Com o servidor parado, mostra uma página explicativa offline; medições exigem o app e o Ollama em execução.
+
+O service worker guarda somente oito recursos públicos de uma lista explícita: página offline, CSS, manifesto e ícones. **Não guarda a página principal com token, APIs, prompts, respostas ou exportações.** Limpar os dados do site remove o cache e a preferência de tema. Não há dependências Python adicionais.
+
 ## Requisitos
 
 - Python 3.11 ou superior.

@@ -295,6 +295,38 @@ class AppTests(HttpFixture):
         self.assertEqual(self.call(headers={'Origin': 'https://evil.example'})[0], 403)
         self.assertEqual(self.call(headers={'Sec-Fetch-Site': 'cross-site'})[0], 403)
 
+    def test_pwa_manifest_and_binary_icons(self):
+        import struct
+        status, headers, body = self.call('/manifest.webmanifest')
+        self.assertEqual(status, 200)
+        self.assertEqual(headers['Content-Type'], 'application/manifest+json')
+        manifest = json.loads(body)
+        self.assertEqual(manifest['start_url'], '/')
+        self.assertEqual(manifest['scope'], '/')
+        self.assertEqual(manifest['display'], 'standalone')
+        self.assertEqual({i['sizes'] for i in manifest['icons']}, {'192x192', '512x512'})
+        for icon in manifest['icons']:
+            status, headers, image = self.call(icon['src'])
+            self.assertEqual(status, 200)
+            self.assertEqual(headers['Content-Type'], 'image/png')
+            self.assertEqual(image[:8], b'\x89PNG\r\n\x1a\n')
+            width, height = struct.unpack('>II', image[16:24])
+            self.assertEqual(f'{width}x{height}', icon['sizes'])
+
+    def test_pwa_assets_preserve_origin_and_token_boundaries(self):
+        for path in ['/pwa.js', '/sw.js', '/offline.html', '/icons/icon.svg', '/icons/apple-touch-icon.png']:
+            status, headers, body = self.call(path)
+            self.assertEqual(status, 200)
+            self.assertNotIn(self.app.token.encode(), body)
+            self.assertEqual(headers['Cache-Control'], 'no-store')
+            self.assertIn("worker-src 'self'", headers['Content-Security-Policy'])
+            self.assertEqual(self.call(path, headers={'Host': 'evil.example'})[0], 403)
+        for path in ['/icons/../../app.py', '/icons/missing.png', '/web/icons/icon.svg']:
+            self.assertEqual(self.call(path)[0], 404)
+        body = self.call('/')[2]
+        self.assertIn(b'rel="manifest"', body)
+        self.assertIn(b'id="install-app"', body)
+
     def test_post_requires_token(self):
         self.assertEqual(self.call('/api/start', 'POST', SETTINGS, {'X-Benchmark-Token': 'bad'})[0], 403)
 
