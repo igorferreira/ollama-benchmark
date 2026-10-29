@@ -7,8 +7,13 @@ services:
     environment:
       APP_BIND: 127.0.0.1
       OLLAMA_URL: http://127.0.0.1:11434
+    volumes:
+      - benchmark-history:/home/benchmark/.ollama_benchmark
     read_only: true
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+volumes:
+  benchmark-history:

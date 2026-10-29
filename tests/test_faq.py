@@ -105,7 +105,7 @@ class FaqTests(unittest.TestCase):
             '/icons/maskable-512.png', '/icons/apple-touch-icon.png',
         }
         self.assertEqual(set(paths), allowed)
-        self.assertIn("CACHE_PREFIX + 'v3'", source)
+        self.assertIn("CACHE_PREFIX + 'v4'", source)
         for path in paths:
             status, _headers, body = self.get(path)
             self.assertEqual(status, 200, path)

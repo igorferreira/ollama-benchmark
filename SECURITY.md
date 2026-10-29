@@ -51,3 +51,9 @@ A coleta é limitada e volátil. Identificadores de pessoa/máquina, caminhos pr
 A biblioteca de pedidos é catálogo sintético local, sem execução automática ou persistência. Seleção/prévia não fazem requisições de inferência; Usar pedido exige confirmação para substituir edição e respeita bloqueio durante benchmark.
 
 Por solicitação explícita, `/api/system` inclui hostname local sanitizado e volátil, obtido sem DNS. No container representa o namespace do container, não o host físico. Pode identificar o ambiente: evite compartilhar capturas. O campo fica fora de logs, estado/exportações de benchmark e cache. As demais restrições de identificadores permanecem.
+
+## Persistência autorizada de comparações
+
+Comparações terminais passam a conter pedido/resposta e métricas em ~/.ollama_benchmark no perfil do processo. JSON versionado, IDs UUIDhex, projeção de campos, limite64MiB e rejeição de symlinks impedem caminhos arbitrários pelo navegador; POST de carga exige token e recusa trabalho ativo. Erros são genéricos sem caminho pessoal. A pasta é preparada no startup e gravações são atômicas, com permissões Linux restritas; não há garantia equivalente de ACL Windows ou criptografia em repouso pelo app.
+
+Não incluir esses arquivos no repositório ou relatórios públicos. Token de sessão, inventário e hostname ficam fora do envelope. O serviço permanece local e dados não entram no cache PWA. Docker usa volume dedicado ao histórico do perfil do container, sem Docker socket, privilégios ou mount do perfil nativo do host. Não há exclusão/pruning automático; gestão e backups do perfil são responsabilidade local.

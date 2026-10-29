@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const source = environment.kind === 'container' ? 'Ambiente do container' : environment.kind === 'native' ? 'Execução nativa' : 'Origem não informada';
     put('system-source', source);
     put('system-os', text(os.name));
+    put('system-summary-hostname', text(snapshot.hostname));
     put('system-cpu', shortCpu(cpu.model));
     put('system-gpu', models.length ? `${shortGpu(models[0])}${models.length>1?` +${models.length-1}`:''}` : 'Não informado');
     const validMemory = knownNumber(memory.total_bytes) && memory.total_bytes > 0 && knownNumber(memory.used_bytes) && memory.used_bytes <= memory.total_bytes;

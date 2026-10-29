@@ -24,6 +24,23 @@ O service worker guarda somente recursos públicos de uma lista explícita: pág
 
 O app não instala, baixa ou modifica modelos. Docker e Compose são opções de execução; não são dependências do modo Python.
 
+## Iniciar e parar pelos scripts da raiz
+
+Depois de instalar Python 3.11+, abra um terminal na pasta do projeto:
+
+| Modo | Linux / Bash | Windows / PowerShell |
+| --- | --- | --- |
+| Iniciar nativo | `./start.sh` | `.\start.ps1` |
+| Parar nativo | `./stop.sh` | `.\stop.ps1` |
+| Iniciar com Docker | `./start.sh --docker` | `.\start.ps1 -Docker` |
+| Parar com Docker | `./stop.sh --docker` | `.\stop.ps1 -Docker` |
+
+Acesse **http://127.0.0.1:8765**. O modo nativo inicia `app.py` em segundo plano. Para outra porta nativa: `./start.sh --port 8766` ou `.\start.ps1 -Port 8766`. O stop usa a porta registrada; não encerra processos apenas por ocuparem a porta.
+
+Iniciar/parar novamente é seguro: os scripts verificam a identidade da instância deste checkout. `service.local.json`, `service.local.log` e `service.local.lock` são arquivos operacionais locais ignorados pelo Git. Não altere o estado manualmente enquanto o app estiver ativo. Uma instância iniciada diretamente com `python3 app.py` não é adotada automaticamente pelos wrappers; encerre-a no terminal original antes de usar start.
+
+Pare o modo atual antes de trocar entre nativo e Docker. O modo Docker usa o Compose do projeto e preserva volumes no stop; precisa de Docker/Compose e Python. Não muda Ollama, firewall ou ExecutionPolicy. Conclua ou cancele a comparação antes de parar o servidor: progresso ainda ativo pode não ter sido salvo. Scripts e instruções Windows estão implementados; homologação Windows real continua pendente.
+
 ## Rodar com Python
 
 Abra um terminal na pasta deste projeto.
@@ -48,7 +65,7 @@ python3 app.py --no-browser
 
 No Windows, substitua `python3` por `py -3`. Para outra porta: `python3 app.py --port 8766`.
 
-O processo precisa continuar aberto. Para encerrar, pressione **Ctrl+C**. Os resultados ficam apenas na memória; exporte CSV ou JSON antes de fechar ou iniciar outra comparação.
+O processo precisa continuar aberto. Para encerrar, pressione **Ctrl+C**. Comparações encerradas são salvas em JSON no perfil de quem executa o app, em `~/.ollama_benchmark`. A última comparação válida reaparece ao iniciar; a tabela Resultados inclui comparações anteriores, com data e ação Detalhes para carregar outra com confirmação. CSV/JSON continuam disponíveis para compartilhar.
 
 ## Como usar
 
@@ -140,7 +157,7 @@ docker compose down
 
 No modo Linux, inclua `-f compose.linux.yaml` em todos esses comandos. `down` encerra somente este projeto. Não execute comandos para parar containers de outros projetos.
 
-O Dockerfile usa a imagem oficial `python:3.12-slim`, usuário sem privilégios, filesystem somente leitura no Compose, capabilities removidas e `no-new-privileges`. O primeiro build precisa baixar a imagem se ela não existir localmente. Resultados não persistem ao recriar o container.
+O Dockerfile usa a imagem oficial `python:3.12-slim`, usuário sem privilégios, filesystem somente leitura no Compose, capabilities removidas e `no-new-privileges`. O primeiro build precisa baixar a imagem se ela não existir localmente. O volume nomeado do histórico preserva comparações terminais ao recriar o container com o mesmo projeto; progresso ativo ainda não salvo pode ser perdido.
 
 ## Testes
 
@@ -183,4 +200,14 @@ A interface valida `Host` e `Origin`, exige JSON e token de sessão para operaç
 
 Documentação de referência consultada via Context7: [API do Ollama](https://github.com/ollama/ollama/blob/main/docs/api.md) e [Docker Compose](https://github.com/docker/compose).
 
-A complexidade dos exemplos é editorial, não prevê tokens/custo/tempo. Exemplos longos podem exigir maior limite de saída, ajustado manualmente. O guia de tokens, tempos e custos está logo abaixo do nome do app. Nos detalhes do ambiente, hostname identifica apenas a máquina/container onde este backend executa: nome local volátil, sem consulta DNS, separado das exportações e do cache. Evite compartilhar capturas com identificadores locais.
+A complexidade dos exemplos é editorial, não prevê tokens/custo/tempo. Exemplos longos podem exigir maior limite de saída, ajustado manualmente. O guia de tokens, tempos e custos está logo abaixo do nome do app. Na faixa de hardware e nos detalhes do ambiente, hostname identifica apenas a máquina/container onde este backend executa: nome local volátil, sem consulta DNS, separado das exportações e do cache. Evite compartilhar capturas com identificadores locais.
+
+## Histórico local
+
+O app cria `~/.ollama_benchmark` no perfil de execução. Guarda uma comparação por JSON depois de completed, failed ou cancelled, incluindo pedido/respostas e métricas; não grava cada fragmento nem recupera uma inferência interrompida por crash. Não apaga comparações antigas automaticamente. Falhas de disco/permissão ou arquivo corrompido geram aviso sem derrubar o app. Proteja esses arquivos e seus backups; consulte [privacidade](PRIVACY.md).
+
+Ao abrir, a última comparação válida restaura resultados e formulário se você ainda não o editou. Na tabela Resultados, use Detalhes e confirme a carga para substituir o formulário/detalhes atuais; a ação não executa teste e fica bloqueada enquanto outro estiver ativo. Modelos ausentes são sinalizados. No Docker, o histórico pertence ao perfil dentro do container e é mantido em volume nomeado do projeto: não é a pasta do perfil nativo do host.
+
+Na seção Resultados, **s = segundos** e **tokens/s = tokens de saída por segundo**. O comparativo aparece antes dos detalhes, e Como ler as métricas explica as unidades; mais conceitos ficam no guia.
+
+A tabela Resultados reúne as comparações do perfil e a comparação atual, com **Data/hora da execução**. As métricas de datas/jobs diferentes permanecem separadas. Abrir Detalhes de uma comparação antiga não remove as demais linhas; CSV/JSON exportam somente a comparação exibida nos detalhes, identificada por data. A instalação como aplicativo fica na ajuda opcional do rodapé.

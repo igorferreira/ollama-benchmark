@@ -128,7 +128,7 @@ Não exigir uma nova rodada de benchmark real para edição puramente documental
 
 ## 7. Registro de alterações e compatibilidade
 
-Ainda não existe versionamento semântico formal ou migração de dados, pois resultados não persistem no processo. `info.version` do OpenAPI identifica a baseline documental e não substitui versionamento de release. Se a API mudar, registrar alteração no contrato e explicar o efeito em clientes próprios que consomem `/api/*`.
+Ainda não existe versionamento semântico formal de releases. A SDD-007 adiciona envelope de histórico com version; versões desconhecidas/corrompidas são ignoradas com aviso, sem migração destrutiva. `info.version` do OpenAPI identifica a baseline documental e não substitui versionamento de release. Se a API mudar, registrar alteração no contrato e explicar o efeito em clientes próprios que consomem `/api/*`.
 
 Arquivos de exportação não têm versão de schema no envelope atual. Preservar nomes/unidades ou introduzir mudança explícita e documentada; não reinterpretar silenciosamente resultados antigos. Não há promessa de importação ou compatibilidade de escrita entre futuras versões.
 
@@ -139,3 +139,7 @@ Na SDD-003, contadores gerais finais continuam distintos da observação opciona
 Callback de progresso é síncrono, opcional e limitado. Evite copiar 64 mil caracteres por token ou chamar snapshot enquanto segura o lock do manager. A prévia e o acumulado são dados privados: nunca adicioná-los à allowlist do SW. Alterar recursos públicos de ajuda exige bump do cache e teste de que nenhum token/API/HTML principal entrou nele.
 
 Novos cenários automatizados ficam em tests/test_live.py e tests/test_faq.py. A matriz deve continuar contendo todos os métodos da suíte, além dos cenários manuais reais. A tarefa Windows/Docker Desktop é planejada no backlog e não pode ser marcada concluída com testes Linux.
+
+## Testes de persistência e UI refinada
+
+Use TemporaryDirectory injetado em HistoryRepository e HOME/USERPROFILE sintéticos no smoke CLI; testes não devem ler ou gravar histórico no perfil real. Cubra criação startup, atomicidade/permissões, IO/corrupção, múltiplos arquivos, limite, IDs/symlinks, save único fora do lock, estados terminais, geração concorrente e proteções HTTP. Legenda/layout e assets têm checks estáticos, mas confirmação, edição durante fetch, polling e foco exigem navegador real. Runtime Docker valida retenção em volume separado com dados sintéticos e sem interromper medições de outras instâncias.

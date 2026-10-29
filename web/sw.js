@@ -1,6 +1,6 @@
 'use strict';
 const CACHE_PREFIX = 'ollama-benchmark-static-';
-const CACHE_NAME = CACHE_PREFIX + 'v3';
+const CACHE_NAME = CACHE_PREFIX + 'v4';
 // Only public resources belong here: never add /, /api/* or benchmark data.
 const PUBLIC_ASSETS = [
   '/offline.html', '/faq.html', '/help.js', '/style.css', '/manifest.webmanifest',

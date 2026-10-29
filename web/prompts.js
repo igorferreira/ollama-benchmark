@@ -227,6 +227,10 @@ const PROMPT_EXAMPLES = [
           selected = item;
           resetConsent();
           preview();
+          if(window.matchMedia('(max-width:650px)').matches){
+            byId('prompts-preview-title').scrollIntoView({block:'start',behavior:'instant'});
+            byId('prompts-preview-text').focus({preventScroll:true});
+          }
         });
         list.append(label);
       });
@@ -234,6 +238,7 @@ const PROMPT_EXAMPLES = [
       byId('prompts-empty').hidden = visible.length !== 0;
       preview();
     }
+    byId('prompts-back-list').addEventListener('click',()=>{list.scrollIntoView({block:'start',behavior:'instant'});const checked=list.querySelector('input:checked')||list.querySelector('input');checked?.focus({preventScroll:true});});
     opener.addEventListener('click', () => {
       controls();
       if (blocked()) return;

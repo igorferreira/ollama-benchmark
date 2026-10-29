@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "web/index.html"
+        ],
+        "createdAt": "2026-10-29T20:52:57.199Z",
+        "reason": "Assessment B verificou padding horizontal de 16px nos separadores existentes; detector nao extrai valor especifico."
+      },
+      {
+        "rule": "repeated-container-text",
+        "value": "*",
+        "files": [
+          "web/index.html"
+        ],
+        "createdAt": "2026-10-29T20:52:57.215Z",
+        "reason": "Assessment B confirmou placeholders independentes de hardware; cada campo desconhecido exige seu proprio indicador."
+      },
+      {
+        "rule": "em-dash-overuse",
+        "value": "*",
+        "files": [
+          "web/index.html"
+        ],
+        "createdAt": "2026-10-29T20:52:57.232Z",
+        "reason": "Assessment B confirmou marcadores de metricas ausentes no HTML inicial, nao travessoes em prosa."
+      }
+    ]
+  }
+}

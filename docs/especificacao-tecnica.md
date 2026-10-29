@@ -118,6 +118,7 @@ O app não valida capacidades de geração de todos os modelos, suporte a `think
   "current": null,
   "started_at": null,
   "error": null,
+  "history": {"enabled": true, "id": null, "saved_at": null, "saved": false, "warning": null},
   "summary": [],
   "live": null,
   "usage": {"completed_runs": 0, "excluded_runs": 0, "prompt_tokens": null, "tokens": null, "prompt_cached_tokens": null, "total_tokens": null}
@@ -136,7 +137,7 @@ O app não valida capacidades de geração de todos os modelos, suporte a `think
 
 `completed` significa que o worker percorreu a fila, mesmo se todas as linhas estiverem `failed`. `failed` global corresponde a falha fora do bloco individual, por exemplo catálogo inacessível ou modelo selecionado ausente. Cancelamento antes de começar uma execução pode produzir `cancelled` com zero linhas.
 
-Todas as abas compartilham esse estado. Novo `/api/start` aceito substitui configuração, linhas e resumo anteriores. Não existe histórico, importação, isolamento por sessão, jobId, retomada ou retenção após reinício.
+Todas as abas compartilham esse estado. Novo `/api/start` aceito substitui configuração, linhas e resumo anteriores. A SDD-007 adiciona histórico terminal e recuperação após reinício, sem importação arbitrária ou retomada de geração. Não há isolamento por sessão; IDs de histórico identificam arquivos salvos, não sessões.
 
 ### 3.3 Resultado `Row`
 
@@ -287,7 +288,7 @@ Porta de Ollama omitida usa 11434; a implementação usa `url.port or 11434`. N�
 
 ## 10. Lacunas conhecidas e evolução
 
-A baseline não contém OpenAPI em runtime, versionamento de API, persistência, autenticação de usuário, histórico, importação ou servidor público. Contratos e efeitos observados acima devem orientar mudanças [spec-first](desenvolvimento.md).
+A versão atual não contém OpenAPI em runtime, versionamento de API, autenticação de usuário, importação arbitrária ou servidor público. A SDD-007 acrescenta persistência e recuperação de comparações terminais em arquivos JSON locais; progresso de geração interrompida não é retomado. Contratos e efeitos observados acima devem orientar mudanças [spec-first](desenvolvimento.md).
 
 Sem testes dedicados atuais para todos os limites de byte/caractere, valores de CLI/env, todas as variantes de POST inválido, falha de metadados posterior à geração, lotes com todos os resultados falhos ou regressão visual automatizada. Lacunas e evidências por requisito estão em [rastreabilidade](rastreabilidade.md). Windows e Docker Desktop são alvos documentados, não plataformas já executadas nesta entrega.
 
@@ -311,7 +312,7 @@ Sem instrumentação, os contadores finais ficam null durante o stream. `live_to
 
 `usage` contém completed_runs, excluded_runs e soma por contador de prompt_tokens/tokens/prompt_cached_tokens/total_tokens. Não há concluídas ou uma concluída carece daquele contador: null para essa soma. Zero numérico válido é preservado. Linhas failed/cancelled são excluídas e não representam uso faturável zero. Cache permanece separado, já faz parte da visão de entrada; nunca adicionar como um terceiro termo ao total informado.
 
-`GET /faq.html` e `/help.js` são recursos públicos estáticos, submetidos às mesmas proteções Host/Origin/CSP do mapa de assets. Não recebem token e não consultam API. Help JS inicializa tema e tooltips compartilhados; a lógica do benchmark continua em app.js. FAQ/help entram na allowlist pública do SW v3. HTML principal, APIs, app.js/pwa.js, prompts, prévias, respostas e exportações continuam fora dela.
+`GET /faq.html` e `/help.js` são recursos públicos estáticos, submetidos às mesmas proteções Host/Origin/CSP do mapa de assets. Não recebem token e não consultam API. Help JS inicializa tema e tooltips compartilhados; a lógica do benchmark continua em app.js. FAQ/help entram na allowlist pública do SW v4. HTML principal, APIs, app.js/pwa.js, prompts, prévias, respostas e exportações continuam fora dela.
 
 A FAQ traz definições e fórmulas educativas com fontes; não calcula faturamento ou impõe SLA universal. O acompanhamento limita-se aos testes desta instância. Casos de aceite e ownership constam da [SDD-003](changes/003-tokens-tempo-real-faq.md).
 
@@ -331,12 +332,38 @@ Fontes Windows: rótulo Windows com kernel/build conhecido, CPU por campo de reg
 
 Escopos de API são identificadores técnicos e são traduzidos pela interface: cpu process_visible_not_exclusive/process_visible_shared_kernel; gpu process_visible/container_visible; memory system_memory/cgroup_limit/container_limit_unknown; disk app_filesystem; uptime kernel/shared_kernel; unknown quando indisponível. O campo environment.scope é backend_process. No Docker, capacidade de host não comprovável fica null, não é inferida de memória física visível. Kernel/CPU podem ser compartilhados; GPU não exposta não prova ausência física nem indica o backend usado pelo Ollama. O alvo Ollama é um sistema externo e não é inventariado.
 
-O frontend faz fetch no-store a cada dez segundos quando o app está ocioso, limitado pelo servidor também no botão Atualizar. Evento benchmark-status informa apenas active; pausa timer e aborta fetch de inventário durante teste, retomando com throttle. O painel não prende foco e oferece hover/foco/toque/clique/Escape. Barra de RAM exige valores conhecidos e capacidade positiva; desconhecido nunca vira barra de 0%. Inventário não persiste em localStorage, Cache Storage ou arquivos, nem aparece nas exportações do benchmark. SW v3 continua guardando dez recursos públicos anteriores; system.js e api/system ficam fora da allowlist.
+O frontend faz fetch no-store a cada dez segundos quando o app está ocioso, limitado pelo servidor também no botão Atualizar. Evento benchmark-status informa apenas active; pausa timer e aborta fetch de inventário durante teste, retomando com throttle. O painel não prende foco e oferece hover/foco/toque/clique/Escape. Barra de RAM exige valores conhecidos e capacidade positiva; desconhecido nunca vira barra de 0%. Inventário não persiste em localStorage, Cache Storage ou arquivos, nem aparece nas exportações do benchmark. SW v4 continua guardando dez recursos públicos anteriores; system.js e api/system ficam fora da allowlist.
 
 Detalhes e critérios: [SDD-004](changes/004-resumo-ambiente-dinamico.md). Há teste sintético de Windows e execução real deve ser explicitamente diferenciada na matriz; não afirmar suporte validado apenas pela existência do código.
 
 ## Biblioteca de pedidos e hostname
 
-`GET /prompts.js` e `GET /prompts.css` são assets estáticos da whitelist, com as mesmas proteções HTTP/CSP e no-store; ficam fora da allowlist SW v3. Não há endpoint novo de inferência. O catálogo local tem 18 IDs únicos e as seis células tipo × complexidade. O dialog fica fora do formulário; controles não submetem benchmark. Substituir edição exige confirmação, revalidada no clique; evento benchmark-status e textarea.disabled bloqueiam abrir/aplicar.
+`GET /prompts.js` e `GET /prompts.css` são assets estáticos da whitelist, com as mesmas proteções HTTP/CSP e no-store; ficam fora da allowlist SW v4. Não há endpoint novo de inferência. O catálogo local tem 18 IDs únicos e as seis células tipo × complexidade. O dialog fica fora do formulário; controles não submetem benchmark. Substituir edição exige confirmação, revalidada no clique; evento benchmark-status e textarea.disabled bloqueiam abrir/aplicar.
 
 `SystemSnapshot.hostname` é string limitada a 256 caracteres imprimíveis ou null, obtida por socket.gethostname uma vez por instância, sem DNS/FQDN. A origem acompanha environment.kind: container não significa hostname físico. Não participa do estado/exports do benchmark, logs nem cache. A exposição local é exceção autorizada documentada na SDD-006.
+
+## Histórico terminal (SDD-007)
+
+| Rota | Resposta | Contrato |
+| --- | --- | --- |
+| GET /api/history | 200 HistoryList;403 proteção local | enabled, warning genérico e items com id/saved_at/status/models/started_at/runs/summary numérico por modelo, mais recentes primeiro. Não inclui pedido/resposta na listagem. |
+| POST /api/history/load | 200 State;400/403/404/408/409/413/415 | Objeto com id de32hexminúsculos; extras ignorados. Mesmas regras de JSON64KiB/token/Host/Origin/Fetch-Site. Não aceita caminho. Ausente/corrompido/semrepo404; ativo ou geração alterada durante IO409. |
+| GET /history.js e /history.css | 200 ou403 | Assets locais da whitelist, no-store, fora da allowlist PWA. |
+
+State.history sempre contém enabled, id(string32hex ou null), saved_at(UTC ou null), saved(bool) e warning(string ou null). Constructor sem repositório (testes/injeção) usa enabled=false. Produção injeta HistoryRepository no manager e prepara a pasta no startup; falha gera aviso genérico sem impedir servidor.
+
+Pasta fixa Path.home()/.ollama_benchmark. Envelope UTF-8 `{version:1,id,saved_at,state}` por arquivo `<id>.json`, máximo64MiB, com state terminal normalizado: status,settings,rows,current:null,started_at,error,live:null. Settings passam por validate_settings; rows até200, modelos/repetições válidos e whitelist CSV+response/warning. Unknownfields são ignorados; tipos inválidos/números não finitos/versão diferente são recusados. Summary e usage são recalculados; token, hostname, inventário e preview de streaming não entram no arquivo.
+
+Uma gravação após cada comparação terminal, sem IO por fragmento ou alteração da medição de geração. Snapshot terminal aparece antes do término da escrita: saved=false é possível transitoriamente; poll posterior atualiza id/saved/warning. Captura sob lock, IO fora, metadata aplicada somente à mesma geração; carga revalida geração/atividade após IO para não substituir novo trabalho. UUIDhex evita nomes fornecidos pelo usuário; raiz/arquivos symlink são recusados. Arquivos regulares limitados são lidos sem shell/rede.
+
+Escrita mkstemp0600, flush/fsync e os.replace no mesmo diretório; pasta0700 no Linux, sem garantia equivalente de ACL Windows. Falha mantém memória e aviso genérico; arquivos corrompidos não são apagados. Lista varre arquivos e projeta só metadata; latest retém o melhor envelope. Não há índice ou pruning, logo IO cresce com quantidade/tamanho do histórico. Colisão UUID não sobrescreve arquivo existente.
+
+No startup, recupera-se o terminal válido de saved_at mais recente. Não retoma running/cancelling ou inferência interrompida. Na UI, settings/modelos são restaurados automaticamente somente enquanto formulário intocado; digitação/seleção durante fetch bloqueia autosubstituição. Carga explícita exige confirmação, invalida consentimento após edição/seleção e bloqueia start/carga concorrentes; respostas de polling anteriores à carga são descartadas. Modelos históricos ausentes são informados sem escolher substitutos automaticamente.
+
+Docker usa HOME=/home/benchmark, UID/GID65534 e volume benchmark-history em /home/benchmark/.ollama_benchmark, somente esse caminho gravável; raiz read-only e isolamento HTTP mantidos. Esse perfil é do container, separado do host nativo. Nenhuma API de excluir/prunar foi adicionada.
+
+## Apresentação e agenda de consulta (SDD-008)
+
+Comparativo primeiro em Resultados, em tabela única por job/modelo com data/hora da execução, incluindo atuais e históricos sem duplicar ID, e legenda s/segundos e tokens/s visível. Instrumentação abre durante teste e recolhe no terminal; individuais/metodologia permanecem disponíveis. Poll ativo700ms, ocioso3s, falha com backoff limitado30s e pausa em document.hidden; visibilitychange retoma imediatamente sem timers duplicados. Tooltip e SYS cedem Escape ao dialog; catálogo mobile leva a prévia ao foco/viewport. Bordas claras e ajuda44px melhoram uso sem certificação WCAG. SWv4 conserva dez assets públicos, sem root/API/histórico/catálogo/dados.
+
+A solução final de histórico é a tabela unificada da AC-UX-10: cada linha mantém data/job/modelo e sua própria mediana. Coluna Data/hora da execução usa started_at original, com saved_at apenas como fallback rotulado; não usar data de importação no lugar de início válido. A lista pública inclui summary numérico por cada modelo configurado, mesmo sem linhas concluídas, com initial_wall_s em vez de initial completo. Ação Detalhes pede confirmação para restaurar estado/formulário, preserva as demais comparações na tabela e não altera inferência. Exportações são apenas do job exibido nos detalhes. Instalação/PWA ficam no details opcional do rodapé, com IDs existentes preservados.

@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!active) return;
     active.tooltip.hidden = true;
     active.button.setAttribute('aria-expanded', 'false');
+    active.button.classList.remove('help-anchor');
     active.pinned = false;
     active = null;
   };
@@ -52,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (active !== item) hide();
       active = item;
       item.pinned ||= pin;
+      button.classList.add('help-anchor');
       tooltip.hidden = false;
       button.setAttribute('aria-expanded', 'true');
     };

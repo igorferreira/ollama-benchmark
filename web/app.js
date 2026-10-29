@@ -5,9 +5,46 @@ const $ = id => document.getElementById(id);
 const token = document.querySelector('meta[name="benchmark-token"]').content;
 let lastState = '';
 let active = false;
+let historyLoading = false;
+let stateRevision = 0;
+let historicalModels = null;
+let catalogRevision = 0;
+let formTouched = false;
+let restoringForm = false;
+let startupChecked = false;
+let lastLiveActivity = null;
+function restoreSettings(state){
+  if(!state?.settings)return;
+  restoringForm=true;
+  const settings=state.settings;
+  $('prompt').value=settings.prompt;
+  for(const key of ['num_predict','num_ctx','repetitions','timeout'])$(key).value=settings[key];
+  for(const key of ['think','live_token_count'])$(key).checked=Boolean(settings[key]);
+  historicalModels=[...settings.models];
+  document.querySelectorAll('[name=model]').forEach(node=>node.checked=historicalModels.includes(node.value));
+  $('prompt').dispatchEvent(new Event('input',{bubbles:true}));
+  restoringForm=false;
+  updateSelectedCount();
+  models();
+}
+function updateSelectedCount(){
+  $('models-selected').textContent=document.querySelectorAll('[name=model]:checked').length+' modelo(s) selecionado(s).';
+}
+function updateControls(){
+  const busy=active||historyLoading;
+  $('start').disabled=busy;$('refresh').disabled=busy;
+  document.querySelectorAll('#benchmark-form input,#benchmark-form textarea,[name=model]').forEach(n=>n.disabled=busy);
+}
+function reportHistoricalModels(available){
+  if(!historicalModels)return;
+  const missing=historicalModels.filter(name=>!available.has(name));
+  window.dispatchEvent(new CustomEvent('history-model-warning',{detail:{message:missing.length?`Modelos do histórico ausentes no catálogo atual: ${missing.join(', ')}. Nenhum outro modelo foi selecionado em seu lugar.`:''}}));
+}
 function setBenchmarkActivity(value){
   if(active===value)return;
   active=value;
+  updateControls();
+  if(value&&!polling)schedulePoll(700);
   window.dispatchEvent(new CustomEvent('benchmark-status',{detail:{active}}));
 }
 const statuses = {idle:'Nenhum teste iniciado',running:'Executando',cancelling:'Cancelando; aguardando encerrar a requisição atual',completed:'Teste concluído',cancelled:'Teste cancelado',failed:'Teste com falha'};
@@ -23,28 +60,34 @@ function cell(row, text){const td=document.createElement('td');td.textContent=te
 function placeholder(target,columns,text){const row=document.createElement('tr');const td=document.createElement('td');td.colSpan=columns;td.textContent=text;row.append(td);$(target).replaceChildren(row);}
 async function models(){
   $('refresh').disabled=true;
+  const revision=++catalogRevision;
   try{
     const data=await api('/api/models');
-    const selected=new Set([...document.querySelectorAll('[name=model]:checked')].map(n=>n.value));
+    if(revision!==catalogRevision)return;
+    const selected=new Set(historicalModels||[...document.querySelectorAll('[name=model]:checked')].map(n=>n.value));
     const loaded=new Set(data.loaded.map(m=>m.name));
     const fragment=document.createDocumentFragment();
     for(const model of data.models){
       const label=document.createElement('label');label.className='model';
-      const input=document.createElement('input');input.type='checkbox';input.name='model';input.value=model.name;input.checked=selected.has(model.name);input.disabled=active;
+      const input=document.createElement('input');input.type='checkbox';input.name='model';input.value=model.name;input.checked=selected.has(model.name);input.disabled=active||historyLoading;
       const span=document.createElement('span');span.textContent=model.name;
       const detail=document.createElement('small');detail.textContent=`${(model.size/1e9).toFixed(2)} GB · ${model.details?.quantization_level||'quantização não informada'}${loaded.has(model.name)?' · carregado':''}`;
       span.append(detail);label.append(input,span);fragment.append(label);
     }
     $('models').replaceChildren(fragment);
+    updateSelectedCount();
+    reportHistoricalModels(new Set(data.models.map(model=>model.name)));
     $('connection').textContent=`Conectado a ${data.ollama_url}. ${data.models.length} modelo(s) instalado(s).${data.models.length?' Selecione os modelos para comparar.':' Instale um modelo no Ollama para começar.'}`;
     error(null);
-  }catch(exc){$('connection').textContent='Ollama indisponível.';error(exc.message);}
-  finally{$('refresh').disabled=active;}
+  }catch(exc){if(revision!==catalogRevision)return;$('connection').textContent='Ollama indisponível.';error(exc.message);if(historicalModels)window.dispatchEvent(new CustomEvent('history-model-warning',{detail:{message:'Não foi possível verificar os modelos do histórico no Ollama. A seleção solicitada foi preservada para uma nova consulta; nenhum modelo substituto foi escolhido.'}}));}
+  finally{if(revision===catalogRevision)$('refresh').disabled=active||historyLoading;}
 }
 function setText(id, text){const node=$(id);if(node.textContent!==text)node.textContent=text;}
 const count = value => Number.isSafeInteger(value) && value >= 0 ? value.toLocaleString('pt-BR') : 'Não informado';
 function renderLive(live){
   $('live-panel').hidden=!live;
+  $('live-details').hidden=!live;
+  if(lastLiveActivity!==active){$('live-details').open=active;$('individual-results').open=false;lastLiveActivity=active;}
   if(!live)return;
   const states={waiting:'Aguardando geração',streaming:'Recebendo conteúdo',completed:'Geração concluída',failed:'Geração com falha; prévia incompleta',cancelled:'Geração cancelada; prévia incompleta'};
   setText('live-title',['completed','failed','cancelled'].includes(live.status)?'Última execução':'Execução ao vivo');
@@ -70,9 +113,15 @@ function renderUsage(usage){
   for(const [id,key] of [['input','prompt_tokens'],['output','tokens'],['cache','prompt_cached_tokens'],['total','total_tokens']])setText('usage-'+id,count(usage?.[key]));
 }
 function render(state){
+  if(!startupChecked){startupChecked=true;if(!formTouched&&state.settings&&['completed','failed','cancelled'].includes(state.status))restoreSettings(state);}
   setBenchmarkActivity(['running','cancelling'].includes(state.status));
-  $('start').disabled=active;$('cancel').disabled=!active || state.status==='cancelling';$('refresh').disabled=active;
-  document.querySelectorAll('#benchmark-form input,#benchmark-form textarea,[name=model]').forEach(n=>n.disabled=active);
+  updateControls();$('cancel').disabled=historyLoading || !active || state.status==='cancelling';
+  window.dispatchEvent(new CustomEvent('comparison-state',{detail:{state}}));
+  const savedDate=new Date(state.history?.saved_at||'');
+  const startedDate=new Date(state.started_at||'');
+  const dateLabel=!Number.isNaN(startedDate.getTime())?startedDate.toLocaleString('pt-BR'):!Number.isNaN(savedDate.getTime())?savedDate.toLocaleString('pt-BR')+' (data de salvamento; início indisponível)':'data não informada';
+  const source=(state.history?.saved&&state.history?.id?'Detalhes da comparação salva':'Detalhes da comparação atual')+' · '+dateLabel+' · '+(statuses[state.status]||state.status);
+  setText('results-source',source+'. Os arquivos CSV/JSON correspondem à comparação exibida.');
   const total=state.settings?state.settings.models.length*state.settings.repetitions:0;
   $('progress').textContent=`${statuses[state.status]||state.status}. ${state.rows.length}/${total} execuções.${state.current?` ${state.current.model}, execução ${state.current.run}.`:''}`;
   $('progress-bar').max=total||1;$('progress-bar').value=state.rows.length;
@@ -93,14 +142,41 @@ function render(state){
   }
   if(state.rows.length)$('rows').replaceChildren(rows);else placeholder('rows',17,'Sem execuções.');
   $('responses').replaceChildren(responses);
-  const summary=document.createDocumentFragment();
-  for(const item of state.summary){const row=document.createElement('tr');for(const value of [item.model,String(item.repeated_count),format(item.tokens_per_s),format(item.first_text_s),format(item.wall_s),format(item.initial?.wall_s)])cell(row,value);summary.append(row);}
-  if(state.summary.length)$('summary').replaceChildren(summary);else placeholder('summary',6,'Os resultados aparecerão aqui.');
+
 }
-async function poll(){try{render(await api('/api/state'));}catch(exc){error('Conexão com o app interrompida: '+exc.message);}finally{setTimeout(poll,700);}}
+let pollTimer=null;
+let polling=false;
+let pollFailures=0;
+function schedulePoll(delay){
+  clearTimeout(pollTimer);pollTimer=null;
+  if(!document.hidden)pollTimer=setTimeout(poll,delay);
+}
+async function poll(){
+  clearTimeout(pollTimer);pollTimer=null;
+  if(document.hidden||polling)return;
+  if(historyLoading){schedulePoll(1000);return;}
+  polling=true;
+  const revision=stateRevision;
+  try{const state=await api('/api/state');pollFailures=0;if(!historyLoading&&revision===stateRevision)render(state);}
+  catch(exc){pollFailures++;if(!historyLoading&&revision===stateRevision)error('Conexão com o app interrompida: '+exc.message);}
+  finally{polling=false;schedulePoll(pollFailures?Math.min(30000,1500*2**Math.min(pollFailures-1,5)):(active?700:3000));}
+}
+document.addEventListener('visibilitychange',()=>{clearTimeout(pollTimer);pollTimer=null;if(!document.hidden)poll();});
+window.addEventListener('history-loading',event=>{historyLoading=Boolean(event.detail?.active);stateRevision++;updateControls();$('cancel').disabled=historyLoading||!active;});
+window.addEventListener('history-loaded',event=>{
+  const state=event.detail?.state;
+  if(!state?.settings)return;
+  stateRevision++;
+  restoreSettings(state);
+  formTouched=true;
+  error(null);render(state);
+});
+$('benchmark-form').addEventListener('input',()=>{if(!restoringForm)formTouched=true;});
+$('benchmark-form').addEventListener('change',()=>{if(!restoringForm)formTouched=true;});
+$('models').addEventListener('change',()=>{if(!restoringForm)formTouched=true;updateSelectedCount();historicalModels=null;window.dispatchEvent(new CustomEvent('history-model-warning',{detail:{message:''}}));});
 $('refresh').addEventListener('click',models);
 $('benchmark-form').addEventListener('submit',async event=>{
-  event.preventDefault();error(null);
+  event.preventDefault();if(active||historyLoading)return;error(null);
   const selected=[...document.querySelectorAll('[name=model]:checked')].map(n=>n.value);
   if(!selected.length){error('Selecione pelo menos um modelo.');return;}
   const settings={models:selected,prompt:$('prompt').value,think:$('think').checked,live_token_count:$('live_token_count').checked};

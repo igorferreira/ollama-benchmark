@@ -4,7 +4,7 @@ Baseline documental: 28/10/2026. Relaciona [SDD](sdd.md), código atual e testes
 
 ## 1. Catálogo da suíte automatizada
 
-Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte atual contém **82 métodos**: 77 preservados até a SDD-004, um teste adicional de hostname e quatro da biblioteca de pedidos. Um método pode conter vários subcasos; a quantidade de métodos não representa porcentagem de cobertura.
+Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`. A suíte atual contém **119 métodos**: 82 preservados até SDD-006, 14 de persistência, quatro de histórico/UI refinada e 19 de ciclo de vida (SDD-009). Um método pode conter vários subcasos; a quantidade de métodos não representa porcentagem de cobertura.
 
 | ID | Nome exato | O que demonstra |
 | --- | --- | --- |
@@ -90,6 +90,43 @@ Execução: `python3 -W error::ResourceWarning -m unittest discover -s tests -v`
 | T80 | `PromptTests.test_dialog_is_outside_benchmark_form_and_controls_are_labelled` | Dialog fora do formulário, labels, posição do botão e cabeçalho |
 | T81 | `PromptTests.test_assets_keep_csp_host_origin_and_no_token_boundary` | Assets com CSP/Host/Origin/no-store, sem token |
 | T82 | `PromptTests.test_catalog_never_uses_inference_persistence_or_offline_cache` | Sem inferência/persistência/cache do catálogo |
+| T83 | `HistoryTests.test_multiple_snapshots_restore_latest_and_utf8` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T84 | `HistoryTests.test_startup_creates_private_folder_and_io_failure_is_nonfatal` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T85 | `HistoryTests.test_permissions_atomic_and_no_temporary_left` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T86 | `HistoryTests.test_storage_failure_is_nonfatal_and_generic` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T87 | `HistoryTests.test_projection_excludes_session_inventory_and_unknown_nested_fields` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T88 | `HistoryTests.test_corrupt_invalid_nonterminal_and_nonfinite_are_ignored` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T89 | `HistoryTests.test_ids_and_symlinks_do_not_escape_directory` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T90 | `HistoryTests.test_oversize_file_is_rejected_before_json_parsing` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T91 | `HistoryTests.test_manager_saves_once_outside_lock_and_restores_without_generation` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T92 | `HistoryTests.test_failed_and_cancelled_jobs_are_saved_once_without_resume` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T93 | `HistoryTests.test_load_revalidates_after_concurrent_start_without_lock_during_io` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T94 | `HistoryTests.test_old_save_does_not_overwrite_new_comparison_metadata` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T95 | `HistoryTests.test_http_protections_list_load_and_busy` | Persistência/recuperação/API com dados sintéticos em diretório temporário |
+| T96 | `HistoryUiTests.test_history_requires_explicit_confirmation_and_is_outside_form` | Histórico e apresentação/refinamento responsivo sem executar inferência |
+| T97 | `HistoryUiTests.test_history_assets_keep_token_and_local_http_boundary` | Histórico e apresentação/refinamento responsivo sem executar inferência |
+| T98 | `HistoryUiTests.test_summary_first_units_legend_and_readable_detail_structure` | Histórico e apresentação/refinamento responsivo sem executar inferência |
+| T99 | `HistoryUiTests.test_startup_and_polling_guards_and_light_input_contrast` | Histórico e apresentação/refinamento responsivo sem executar inferência |
+| T100 | `HistoryTests.test_list_projects_separate_model_summaries_without_prompt_or_response` | Duas comparações/datas separadas, métricas numéricas por modelo e nenhum texto privado na lista |
+| T101 | `ServiceTests.test_state_missing_corrupt_or_other_checkout_never_controls_a_process` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T102 | `ServiceTests.test_state_requires_creation_executable_and_this_exact_command` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T103 | `ServiceTests.test_atomic_state_is_private_and_keeps_previous_file_on_replace_failure` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T104 | `ServiceTests.test_start_is_idempotent_for_the_recorded_process` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T105 | `ServiceTests.test_reused_pid_refuses_start_and_stop_without_signalling` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T106 | `ServiceTests.test_port_collision_does_not_spawn_or_stop_other_servers` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T107 | `ServiceTests.test_stop_missing_or_dead_is_idempotent_without_any_signal` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T108 | `ServiceTests.test_stop_signals_only_the_validated_pidfd` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T109 | `ServiceTests.test_identity_change_after_opening_pidfd_preserves_state_and_sends_nothing` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T110 | `ServiceTests.test_lifecycle_lock_refuses_concurrent_controller_then_releases` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T111 | `ServiceTests.test_compose_is_scoped_to_checkout_and_does_not_remove_volumes` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T112 | `ServiceTests.test_docker_start_refuses_occupied_port_without_healthy_project_container` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T113 | `ServiceTests.test_docker_start_is_idempotent_only_for_healthy_project_container` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T114 | `ServiceTests.test_compose_success_without_confirmed_readiness_is_failure` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T115 | `ServiceTests.test_container_health_rejects_native_app_or_other_hostname` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T116 | `ServiceTests.test_compose_ownership_checks_stopped_containers_checkout_and_config` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T117 | `ServiceTests.test_compose_refuses_wrong_ownership_before_start_or_stop` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T118 | `ServiceTests.test_operational_symlinks_and_reparse_attributes_never_touch_the_target` | Ciclo de vida local, identidade segura e isolamento dos recursos do checkout |
+| T119 | `PowerShellWrapperTests.test_multiple_python_commands_choose_one_without_running_the_app` | Múltiplos resultados Get-Command, caminhos Unicode/espaços e encaminhamento dos wrappers sem executar app real |
 
 ## 2. Evidências executadas e disponibilidade
 
@@ -289,3 +326,55 @@ A revisão identificou um conflito real de Escape: painéis/ajudas atrás do dia
 No build final, a raiz abriu simultaneamente painel SYS fixado, tooltip por hover e biblioteca por Enter: o primeiro Escape fechou somente o dialog e devolveu foco ao botão; o segundo fechou painel/tooltip. Fluxo integral da biblioteca repetido sem inferência. QA final independente **APROVADO** após essas evidências e a revalidação dirigida.
 
 Fechamento: **QA APROVADO**, **review independente posterior APROVADO** e auditoria de segurança **APROVADA**. Nenhum commit/push ou alteração de serviço/Ollama foi feito pela equipe de implementação. Windows real permanece não executado.
+
+## SDD-007/008 — Histórico terminal e apresentação
+
+| Requisito/critério | Código | Verificação |
+| --- | --- | --- |
+| RF-24 / AC-HIST-01/02 | backend/history.py, composição app.py e finally do manager | T83–T92; startup/criação/corrupção/IO/atômico/failed/cancelled; crash ativo é lacuna intencional sem retomada |
+| RF-25 / AC-HIST-03 | history_list/load_history e HTTP | T93–T95, Host/Origin/token/IDs/409/geração concorrente |
+| AC-HIST-04 | app.js restoreSettings/stateRevision e history.js | T96/T99; edição durante fetch e confirmação exigem navegador |
+| AC-HIST-05 | terminal_state allowlist e SWv4 | T87/T97/T49/T76; sem inventário/token/cache no histórico |
+| AC-HIST-06 | Dockerfile/Compose volume e HOME | Config/build/runtime pela raiz; Windows real pendente |
+| RF-26 / AC-UX-01/02/03/08/10/11 | comparativo unificado com datas, unidades, modelos limitados, CSS | T96/T98/T99; hierarchy/mobile/contraste real complementam no browser |
+| AC-UX-04/05 | catálogo mobile, help.js/style.css | T50/T80/T98; foco/hover/toque e prioridade Escape exigem browser |
+| AC-UX-06/07 | app.js poll e offline.html | T99/T98, visibilidade/backoff/sem timers duplicados e offline visual no browser |
+| AC-HIST-07 | Gates independentes | E12: QA, segurança e revisão final aprovados nesta entrega |
+
+T83–T95 e T100 estão em tests/test_history.py; T96–T99 em tests/test_history_ui.py. CliTests agora isola HOME/USERPROFILE com diretório temporário para não ler o perfil real ao iniciar app.py.
+
+### E12 — Validação SDD-007/008
+
+Workers: suíte anterior ao último ajuste de startup, 98 testes em 24,423 s com ResourceWarning como erro; checks finais dirigidos 13 testes de histórico e quatro de UI aprovados. Esses checks não equivalem ao gate independente final de 100 testes. Browser, Docker/volume, QA, auditoria de segurança e revisão finais serão registrados após execução pela raiz.
+
+A solução intermediária de accordion/seletor de histórico foi retirada antes do gate. O contrato final usa a tabela única Resultados, linhas job/modelo com data/hora original, metadata summary numérica (T100), detalhes com confirmação e exportação somente do job exibido. Instalação permanece no details opcional do rodapé.
+
+
+A raiz validou o runtime nativo atualizado: preservou a comparação anterior de duas execuções, migrou-a para o histórico do perfil e confirmou a restauração após reinício. Duas novas execuções reais, com saída limitada a oito tokens, geraram outro JSON automaticamente sem apagar o anterior. Diretório Linux 0700 e arquivos 0600 foram verificados; a listagem retornou somente metadata/summary numérico previsto.
+
+Em um perfil sintético isolado, o navegador validou múltiplas comparações/datas, métricas separadas por job, confirmação, exportação do job exibido e nenhuma inferência ao abrir detalhes. Seis combinações de viewport/tema passaram sem overflow global; ajuda ancorada de 44 px, foco da prévia e SW v4 sem dados privados foram conferidos. A confirmação final da tabela mantém aviso de rolagem visível também no desktop, cabeçalhos/Estado com quebra e horário com fonte mínima de 12 px.
+
+O teste Docker usou somente fixture e volume temporários dedicados: UID 65534, root filesystem read-only, salvamento e recuperação após recriação aprovados; recursos de teste removidos pela raiz. A aplicação principal permanece nativa. Estas evidências não homologam Windows real, toque físico ou leitor de tela. QA automatizado e segurança separados foram informados pela raiz; o fechamento abaixo registra o gate final.
+
+
+Fechamento independente: **QA APROVADO**, **auditoria de segurança APROVADA** e **review posterior APROVADO**. A suíte completa executou 100 métodos em 23,932 s: 99 passaram e um assert dependente de espaçamento foi corrigido sem alterar produção; os quatro testes UI passaram novamente em 0,521 s. Após o patch final HTML/CSS, quatro UI passaram em 0,517 s. Sintaxe JavaScript, diff, ambos Compose e contrato OpenAPI foram verificados: 100 métodos na matriz, 28 rotas e 61 referências resolvidas. A raiz confirmou visualmente a tabela após a última alteração.
+
+A revisão registrou uma observação P2 não bloqueante: uma atualização manual na microjanela entre o estado terminal e a publicação do history.id pode duplicar temporariamente a linha corrente até o próximo polling. Não duplica o arquivo persistido, não perde dados e não mistura métricas entre jobs. Não se alega invariância visual absoluta nessa janela. Windows real, leitor de tela e toque físico continuam não homologados. Nenhum commit/push foi realizado nesta entrega.
+
+
+## SDD-009 — Ciclo de vida na raiz
+
+T101–T119 estão em tests/test_service.py e cobrem estado local inválido/ausente, identidade e PID reutilizado, atomicidade, idempotência, lock, porta ocupada, sinal por pidfd, argumentos Compose, prontidão do container e propriedade do checkout, além de symlink/reparse/arquivos especiais. A equipe de implementação executou os 18 com ResourceWarning como erro; Bash passou shellcheck e os scripts PowerShell passaram parsing via pwsh no Linux. A evidência E13 abaixo registra runtime e gates desta extensão. Não equivale a homologação Windows real.
+
+A regressão de resolução PowerShell acrescentou T119: a fixture retorna dois executáveis para Get-Command e confirma que cada wrapper usa somente o primeiro, inclusive em caminhos com espaços/Unicode. Os 19 testes de lifecycle passaram no Linux; nenhum app real foi iniciado pela fixture.
+
+
+### E13 — Validação SDD-009
+
+QA independente **APROVADO**: suíte base 118/118 em 24,423 s; após os ajustes dirigidos, Service 19/19 em 1,132 s. A união contém 119 métodos, todos presentes na matriz. Shellcheck, bash -n, parser PowerShell via pwsh Linux, diff e links passaram; contrato preservado em 28 rotas/61 referências. Segurança do helper e revisão final independente desta extensão foram aprovadas separadamente.
+
+A raiz validou ciclo real Bash e PowerShell 7 no Linux: start/stop, idempotência, recusa de porta ocupada e de instância não gerenciada, prontidão Docker do próprio checkout e preservação dos dois arquivos de comparações anteriores. Um checkout sintético com espaços/Unicode foi exercitado desde cwd externo, sem usar o perfil real nessa fixture. A aplicação final ficou nativa em 127.0.0.1:8765 pelo start.sh, com Docker parado e históricos preservados. Arquivos service-runtime.local.json e service-spaces.local.json são evidências ignoradas, não documentação pública de máquina.
+
+Windows real com PowerShell 5.1/7 permanece pendente. Parada durante inferência pode interromper progresso não salvo; concluir/cancelar a comparação continua recomendado. Setup/instalação automática, serviços de sistema, autostart e mudanças globais de política não foram acrescentados.
+
+Fechamento E13: **QA APROVADO**, **segurança APROVADA** e **review final independente APROVADO**. Nenhuma nova alteração de produção foi feita após os testes dirigidos e o ciclo real. Setup e validação Windows real permanecem no backlog; somente os quatro wrappers e o helper local foram implementados nesta extensão.

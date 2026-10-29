@@ -29,6 +29,9 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 - [SDD-005 — Biblioteca local de pedidos](changes/005-biblioteca-pedidos.md): exemplos, filtros, prévia e aplicação explícita sem iniciar teste.
 - [SDD-006 — Nome local e cabeçalho](changes/006-hostname-e-cabecalho.md): hostname volátil e acesso destacado ao guia.
 
+- [SDD-007 — Histórico local](changes/007-historico-local.md): JSON terminal no perfil, recuperação e carga protegida.
+- [SDD-008 — Refinamento visual](changes/008-refinamento-visual-impeccable.md): resultados, configuração, ajuda, polling e legendas.
+
 ## Decisões arquiteturais
 
 - [ADR-001 — Python stdlib e interface web local](adr/001-python-stdlib-web-local.md).
@@ -36,6 +39,8 @@ Pacote SDD da baseline de **28/10/2026**, escrito a partir do código já implem
 - [ADR-003 — Fronteira local e proteções HTTP](adr/003-fronteira-local-e-protecao-http.md).
 - [ADR-004 — Docker opcional e redes distintas](adr/004-docker-opcional-redes.md).
 - [ADR-005 — Separação de responsabilidades no backend](adr/005-separacao-responsabilidades-backend.md).
+
+- [ADR-006 — Histórico JSON terminal no perfil](adr/006-historico-json-terminal-perfil.md).
 
 ADRs 001–004 registram retrospectivamente decisões presentes na implementação inicial; não inventam aprovação formal anterior ao desenvolvimento. ADR-005 e SDD-001 acompanham a demanda explícita de refatoração desta rodada.
 
@@ -50,3 +55,5 @@ As evidências `test-results/`, `TEST_RESULTS.md` e relatórios de auditoria sã
 ## Manter consistente
 
 Altere primeiro os requisitos/BDD e contratos afetados, implemente, valide e atualize a matriz. Se houver divergência, identifique-a como desvio e corrija documento ou código segundo a intenção autorizada; não declare como implementado algo que só aparece no plano. Referências cruzadas e limites concretos devem ser conferidos contra os símbolos atuais, não contra memória de conversas.
+
+A [SDD-009 — scripts de início/parada](changes/009-scripts-start-stop.md) descreve os quatro wrappers da raiz, identidade do processo e limites de plataforma.

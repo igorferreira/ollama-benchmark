@@ -12,13 +12,52 @@ from .validation import validate_settings
 
 
 class BenchmarkManager:
-    def __init__(self, client):
+    def __init__(self, client, history=None):
         self.client = client
+        self.history = history
+        self._job_id = 0
         self.lock = threading.Lock()
         self.cancel_event = threading.Event()
         self.thread = None
         self._live_started = None
         self.state = {'status': 'idle', 'rows': [], 'settings': None, 'current': None, 'started_at': None, 'error': None, 'live': None}
+        self.state['history'] = self._history_metadata()
+        if history is not None:
+            envelope, warning = history.latest()
+            if envelope is not None:
+                self.state = envelope['state']
+                self.state['history'] = self._history_metadata(envelope, warning)
+            else:
+                self.state['history']['warning'] = warning
+
+    def _history_metadata(self, envelope=None, warning=None):
+        return {'enabled': self.history is not None, 'id': envelope['id'] if envelope else None,
+                'saved_at': envelope['saved_at'] if envelope else None, 'saved': envelope is not None, 'warning': warning}
+
+    def history_list(self):
+        return self.history.list() if self.history is not None else {'enabled': False, 'items': [], 'warning': None}
+
+    def load_history(self, identifier):
+        from .history import validate_id
+        validate_id(identifier)
+        with self.lock:
+            if self.state['status'] in {'running', 'cancelling'}:
+                raise RuntimeError('Aguarde o término do teste antes de carregar o histórico.')
+            generation = self._job_id
+        if self.history is None:
+            raise FileNotFoundError('Histórico indisponível nesta instância.')
+        envelope = self.history.load(identifier)
+        with self.lock:
+            if self._job_id != generation or self.state['status'] in {'running', 'cancelling'}:
+                raise RuntimeError('O estado mudou durante a carga do histórico. Tente novamente.')
+            self._job_id += 1
+            self.state = envelope['state']
+            self.state['history'] = self._history_metadata(envelope)
+            self._live_started = None
+            result = copy.deepcopy(self.state)
+        result['usage'] = usage(result['rows'])
+        result['summary'] = summarize(result['rows'])
+        return result
 
     def snapshot(self):
         with self.lock:
@@ -38,9 +77,11 @@ class BenchmarkManager:
         with self.lock:
             if self.state['status'] in {'running', 'cancelling'}:
                 raise RuntimeError('Já existe um teste em andamento.')
+            self._job_id += 1
             self.cancel_event = threading.Event()
             self._live_started = None
             self.state = {'status': 'running', 'settings': settings, 'rows': [], 'current': None, 'started_at': datetime.now(timezone.utc).isoformat(), 'error': None, 'live': None}
+            self.state['history'] = self._history_metadata()
             self.thread = threading.Thread(target=self._run, args=(settings,), daemon=True)
             self.thread.start()
 
@@ -71,6 +112,8 @@ class BenchmarkManager:
                 live.update(tokens=None, prompt_tokens=None, prompt_cached_tokens=None, total_tokens=None, count_status='unavailable', output_tokens_observed=None, token_observation_status='unavailable' if self.state['settings']['live_token_count'] else 'disabled')
 
     def _run(self, settings):
+        with self.lock:
+            generation = self._job_id
         terminal_status, terminal_error = 'completed', None
         try:
             installed = {m['name'] for m in self.client.get('/api/tags').get('models', [])}
@@ -125,3 +168,10 @@ class BenchmarkManager:
                 self.state['status'] = 'cancelled' if self.cancel_event.is_set() else terminal_status
                 self.state['error'] = terminal_error
                 self.state['current'] = None
+
+                to_save = copy.deepcopy(self.state)
+            if self.history is not None:
+                metadata = self.history.save(to_save)
+                with self.lock:
+                    if self._job_id == generation:
+                        self.state['history'] = metadata

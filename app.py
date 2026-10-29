@@ -6,6 +6,7 @@ import os
 import threading
 import webbrowser
 
+from backend.history import HistoryRepository
 from backend.http import AppServer
 from backend.manager import BenchmarkManager
 from backend.ollama import OllamaClient
@@ -21,7 +22,7 @@ def main():
     if host not in {'127.0.0.1', '0.0.0.0'}:
         parser.error('APP_BIND deve ser 127.0.0.1 ou 0.0.0.0 (somente dentro do container).')
     client = OllamaClient(os.environ.get('OLLAMA_URL', 'http://127.0.0.1:11434'))
-    manager = BenchmarkManager(client)
+    manager = BenchmarkManager(client, HistoryRepository())
     server = AppServer((host, args.port), manager, SystemCollector())
     url = f'http://127.0.0.1:{server.server_port}'
     print(f'Ollama Benchmark: {url}', flush=True)

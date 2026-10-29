@@ -24,3 +24,7 @@ Hostname coberto por fixture sintética, sanitização/limite/null e suíte SYS 
 Navegador validado pela raiz: 18 exemplos/seis células e fluxo seguro, seis combinações de viewport/tema sem overflow; hostname local rotulado por origem e guia/cabeçalho aprovados. Evidência resumida na [E11 da rastreabilidade](../rastreabilidade.md#e11--biblioteca-de-pedidos-e-hostname-29102026). Auditoria independente de segurança aprovada; gates QA/review formalizados no fechamento da matriz.
 
 Fechamento: **QA APROVADO**, **review independente posterior APROVADO** e auditoria de segurança **APROVADA**. Nenhum commit/push ou alteração de serviço/Ollama foi feito pela equipe de implementação. Windows real permanece não executado.
+
+## Ajuste posterior — hostname visível na faixa
+
+Por solicitação posterior, o nome também aparece abaixo do SO na faixa de CPU/GPU/RAM, com rótulo Hostname e a origem nativa/container já indicada. Nomes longos são abreviados visualmente na faixa; o valor completo continua nos detalhes. A apresentação reutiliza o mesmo snapshot local, sem nova coleta, persistência ou alteração da API.

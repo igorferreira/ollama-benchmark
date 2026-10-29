@@ -71,7 +71,8 @@ Não há contas, perfis, autenticação de usuários, projetos compartilhados ou
 - Inferências sequenciais com parâmetros comuns e identificação de cada modelo/execução.
 - Métricas numéricas por execução, resumo das chamadas repetidas e separação da primeira chamada.
 - Progresso por execução, mensagens de falha, texto final registrado e cancelamento.
-- Exportação CSV e JSON do estado disponível na memória.
+- Exportação CSV e JSON do estado exibido, incluindo histórico terminal restaurado.
+- Extensão SDD-007: JSON por comparação terminal no perfil local, recuperação ao iniciar e carga explícita protegida.
 - Interface local em português e layout com tabelas roláveis.
 - Extensão solicitada nesta rodada: seleção de tema claro/escuro com preferência local; implementada nesta rodada e validada nos cenários de navegador registrados na rastreabilidade.
 - Execução nativa com Python e execução opcional do app em container, mantendo Ollama no host.
@@ -84,7 +85,7 @@ Não há contas, perfis, autenticação de usuários, projetos compartilhados ou
 - Comparação forçada CPU versus GPU, seleção de backend Vulkan/ROCm ou coleta portátil de utilização da GPU.
 - Avaliação de qualidade, correção, segurança ou pertinência do conteúdo gerado pelos modelos.
 - Testes de carga simultânea, processamento em paralelo ou comparação estatística entre hardware diferente.
-- Banco de dados, histórico persistente, importação de resultados e recuperação após reiniciar o processo.
+- Banco de dados, importação de arquivos arbitrários e retomada de inferência interrompida. Histórico terminal/recuperação foram adicionados depois pela SDD-007.
 - Gráficos, instalador executável, aplicação móvel ou pacote desktop nativo.
 - Comprovação de compatibilidade com Windows e Docker Desktop sem execução nesses ambientes.
 
@@ -119,7 +120,11 @@ O termo **deve** descreve o comportamento da baseline ou um critério para prese
 
 | RF-21 | Oferecer 18 exemplos locais com tipo/complexidade, filtros e prévia integral. | Três por célula; classificação editorial, sem promessa de custo ou qualidade. Ver SDD-005. |
 | RF-22 | Aplicar exemplo somente por Usar pedido, com confirmação de edição existente e bloqueio durante teste. | Navegação/fechamento preservam textarea e parâmetros; não inicia inferência. |
-| RF-23 | Exibir hostname dinâmico local nos detalhes e destacar guia sob a marca. | Exceção autorizada à minimização: volátil, sem DNS ou dados pessoais versionados. Ver SDD-006. |
+| RF-23 | Exibir hostname dinâmico local na faixa de hardware e nos detalhes; destacar guia sob a marca. | Exceção autorizada à minimização: volátil, sem DNS ou dados pessoais versionados. Ver SDD-006. |
+
+| RF-24 | Persistir comparações terminais em JSON no perfil local e restaurar a última válida ao iniciar. | Sem gravação por fragmento ou retomada de inferência; falhas não derrubam o app. SDD-007. |
+| RF-25 | Consultar/carregar histórico explicitamente com confirmação e bloqueio durante teste. | Restaura formulário/modelos/resultados sem iniciar comparação; API revalida atividade. |
+| RF-26 | Priorizar comparativo e oferecer configuração/ajuda/legenda responsivas. | Instrumentação e detalhes recolhidos após o teste, unidades claras, polling suspenso em aba oculta. SDD-008. |
 
 ## 6. Requisitos não funcionais
 
@@ -227,7 +232,7 @@ Requisitos: RF-09; RN-09.
 - **Dado** registros disponíveis, **quando** eu baixar JSON, **então** o arquivo conterá o estado, configurações, resultados individuais e resumo disponíveis no instante da exportação.
 - **Dado** registros disponíveis, **quando** eu baixar CSV, **então** cada registro terá uma linha com parâmetros, data e métricas selecionadas, preservando separadores e quebras de linha do conteúdo por escape CSV.
 - **Dado** texto iniciado por caractere tratado como fórmula por planilhas, **quando** ele entrar em uma célula CSV exportada, **então** receberá a proteção implementada para reduzir interpretação como fórmula.
-- **Dado** um teste aceito após outro teste, **quando** o novo estado for criado, **então** os resultados anteriores deixarão de existir na memória do app; os arquivos previamente exportados permanecerão fora desse ciclo.
+- **Dado** um teste aceito após outro teste, **quando** o novo estado for criado, **então** o estado ativo em memória será substituído; comparações terminais previamente salvas e arquivos exportados permanecerão fora desse ciclo.
 
 ### US-08 — Usar a ferramenta somente nesta máquina
 
@@ -412,3 +417,13 @@ Requisitos RF-21/RF-22. Dado um pedido editado, quando eu filtrar, selecionar ou
 ### US-15 — Reconhecer o ambiente e encontrar o guia
 
 Requisito RF-23. Dado o resumo da instância atual, quando abrir detalhes, então vejo hostname da máquina ou container, ou Não informado em falha. Não é hostname do alvo Ollama nem descoberta remota. O guia fica abaixo da marca, antes do resumo.
+
+## Extensões SDD-007/008
+
+### US-16 — Reabrir comparações sem repetir inferências
+
+Requisitos RF-24/RF-25. Dado um histórico terminal válido no perfil local, quando iniciar o app, então os resultados reaparecem e o formulário só é restaurado se intocado. Dado trabalho atual, quando cancelar a confirmação de carga, então nada é substituído; durante running/cancelling a API recusa carregar. Arquivo corrompido/IO indisponível produz aviso genérico sem crash nem caminho pessoal.
+
+### US-17 — Ler resultados e unidades com menos rolagem
+
+Requisito RF-26. Dado um teste encerrado ou histórico carregado, quando abrir Resultados, então o resumo comparativo e a legenda aparecem antes da instrumentação recolhida. Durante teste a instrumentação abre; detalhes e metodologia continuam acessíveis. A biblioteca mobile leva a prévia à área visível e a ajuda respeita a prioridade do dialog.

@@ -29,3 +29,7 @@ Cancelamento é cooperativo, com tentativa de interromper o transporte atual. De
 ## Evidências e revisão futura
 
 `BenchmarkManager`, `summarize` e `OllamaClient.generate` estão respectivamente em [manager](../../backend/manager.py), [metrics](../../backend/metrics.py) e [ollama](../../backend/ollama.py), após a [SDD-001](../changes/001-separacao-responsabilidades.md). Os testes de concorrência, finalização atômica, stream contínuo e cancelamento estão em [tests/test_benchmark.py](../../tests/test_benchmark.py). A [rastreabilidade](../rastreabilidade.md) identifica os nomes completos dos testes. Reavaliar persistência ou múltiplos jobs somente após especificar retenção, privacidade, concorrência e critérios de limpeza.
+
+## Atualização de retenção
+
+A [ADR-006](006-historico-json-terminal-perfil.md) e SDD-007 substituem a retenção exclusivamente transitória por histórico JSON de comparações terminais no perfil. Execução sequencial, um estado ativo compartilhado e limites de isolamento permanecem.

@@ -1,0 +1,12 @@
+/* Saved and current comparisons share one table; confirmation changes only the selected details. */
+.comparison-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:18px 0 8px}.comparison-toolbar button{font-size:.8rem;flex-shrink:0}
+.history-note{font-size:.8rem;color:var(--muted);line-height:1.6;margin:0}
+.history-confirmation{margin:16px 0;border-left:3px solid var(--accent);padding:2px 0 2px 14px;font-size:.84rem;line-height:1.6}
+.history-confirmation p{margin:4px 0 10px}.history-confirmation label{display:flex;align-items:flex-start;gap:8px;font-size:.84rem}.history-confirmation input{margin-top:2px}
+.history-confirm-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.history-warning{color:var(--error);font-size:.82rem;line-height:1.6;overflow-wrap:anywhere;margin:10px 0}
+.comparison-date{font-variant-numeric:tabular-nums;white-space:normal;min-width:110px;max-width:150px;line-height:1.5}.comparison-date small{display:block;color:var(--muted);font-size:.75rem}.comparison-current td{border-bottom-color:var(--accent)}.comparison-details{font-size:.8rem;padding:7px 10px;min-height:36px}
+.install-help{margin-top:18px;font-size:.83rem}.install-help>summary{color:var(--muted);font-weight:500}.install-help .header-actions{margin:14px 0 8px}.install-help .install-guidance{font-size:.8rem;margin:8px 0;max-width:75ch}
+@media(max-width:600px){.comparison-toolbar{align-items:flex-start}.comparison-date{min-width:94px;max-width:110px;padding:10px 8px;font-size:.75rem}.comparison-table th:first-child,.comparison-table td:first-child{min-width:90px;max-width:110px;padding:10px 8px}.comparison-table th:nth-child(2){min-width:94px;max-width:110px;white-space:normal;font-size:.75rem;padding:10px 8px}.comparison-table th:nth-child(3){padding:10px 6px;font-size:.75rem}.comparison-table th:nth-child(3) .help{margin-left:0}.comparison-toolbar button{padding:8px 10px}}
+
+.comparison-table th{white-space:normal}.comparison-table th:nth-child(8),.comparison-table td:nth-child(8){white-space:normal;min-width:96px;max-width:150px}.table-scroll-hint{display:block}

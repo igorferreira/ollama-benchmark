@@ -30,7 +30,7 @@ Não há serviço de nuvem, conta, autenticação de usuário, telemetria, downl
 
 ### Extensão PWA (SDD-002)
 
-`web/pwa.js` registra `web/sw.js` e adapta o evento de instalação do navegador. `manifest.webmanifest` define identidade e ícones; `backend.http.STATIC_ASSETS` restringe as novas rotas e tipos MIME. Ícones PNG são entregues como bytes, sem decodificação de texto. O service worker persiste somente oito assets públicos, nunca HTML principal com token ou APIs. Navegações principais usam rede com fallback para `offline.html`, que explica como iniciar o servidor. Benchmarks não funcionam offline. CSP restringe imagens, manifesto e worker à mesma origem.
+`web/pwa.js` registra `web/sw.js` e adapta o evento de instalação do navegador. `manifest.webmanifest` define identidade e ícones; `backend.http.STATIC_ASSETS` restringe as novas rotas e tipos MIME. Ícones PNG são entregues como bytes, sem decodificação de texto. O service worker persiste somente dez assets públicos, nunca HTML principal com token ou APIs. Navegações principais usam rede com fallback para `offline.html`, que explica como iniciar o servidor. Benchmarks não funcionam offline. CSP restringe imagens, manifesto e worker à mesma origem.
 
 ## 3. C4 — containers de execução
 
@@ -49,7 +49,7 @@ flowchart TB
     end
 ```
 
-Uma instância Python possui um único `BenchmarkManager` e um único estado compartilhado. Duas abas enxergam a mesma comparação; não existem sessões de negócio, identificador de job, filas por pessoa ou histórico de comparações. Iniciar outra comparação substitui os resultados da anterior. A exportação é a fronteira de retenção escolhida pelo operador.
+Uma instância Python possui um único `BenchmarkManager` e um único estado ativo compartilhado. Duas abas enxergam a mesma comparação; não existem sessões de negócio ou filas por pessoa. Iniciar outra comparação substitui o estado ativo. A SDD-007 acrescenta arquivos JSON de comparações terminais no perfil local, identificados por UUID, e recuperação do último registro válido ao iniciar. A tabela reúne os registros por comparação/modelo/data, sem agregar jobs distintos. Exportações continuam sendo downloads explícitos da comparação exibida nos detalhes.
 
 ## 4. C4 — componentes e dependências internas
 
@@ -115,7 +115,7 @@ Ao escolher um tema, o código atualiza a página imediatamente e tenta salvar a
 
 Mudanças de preferência do sistema são acompanhadas enquanto não houver escolha explícita nessa página ou preferência salva válida. Não há opção **Sistema**, botão de reset, sincronização entre abas pelo evento `storage` ou configuração no servidor. O armazenamento é por origem do navegador: mudar entre `localhost` e `127.0.0.1`, porta ou perfil pode produzir preferências distintas. Para restaurar a escolha automática, a pessoa pode limpar os dados dessa origem nas ferramentas do navegador; o app não fornece esse comando.
 
-A preferência visual é o único dado funcional persistido automaticamente no navegador. Prompts, métricas e resultados continuam na memória do processo Python até substituição/encerramento, salvo exportação manual. O carregamento externo de script e CSS permanece compatível com a CSP existente (`script-src 'self'`, `style-src 'self'`), sem inline scripts, CDN ou dependências novas.
+A preferência visual é o único dado funcional persistido automaticamente no navegador. Prompts, métricas e resultados ativos ficam em memória; comparações terminais passam a persistir no perfil local pela SDD-007, além de exportação manual. O carregamento externo de script e CSS permanece compatível com a CSP existente (`script-src 'self'`, `style-src 'self'`), sem inline scripts, CDN ou dependências novas.
 
 ## 5. Sequência de uma comparação
 
@@ -211,7 +211,7 @@ As consultas de metadados antes/depois da geração ficam **fora** desse deadlin
 | Processo → Ollama | Pedido, parâmetros e respostas NDJSON | Destino HTTP restrito por hostname local; limites de corpo/linha; validação de contagem e duração | Metadados são em parte repassados; app confia no formato do Ollama e registra erros quando inválido |
 | Dados → DOM | Modelo, texto e erros | Renderização com `textContent`, CSP e arquivos locais | Não há renderização de Markdown/HTML gerado |
 | Estado → CSV | Prompt, modelos e métricas | Writer CSV e prefixo de apóstrofo em strings que possam começar fórmulas | CSV não é formato de round-trip perfeito; use JSON para preservar estrutura |
-| Memória → disco | Download solicitado | Exportação explícita pelo navegador | Não há autosave, histórico, recuperação ou criptografia de arquivos |
+| Memória → disco | Download solicitado | Exportação explícita pelo navegador | SDD-007 salva terminais automaticamente em JSON local; exportação continua explícita. Não há criptografia de arquivos pelo app |
 | Host → container | Rede e arquivos do app | Usuário 65534:65534, read-only, capabilities removidas e no-new-privileges | Rede host no Linux compartilha namespace; container não cria isolamento do Ollama |
 
 O token é criado por processo e injetado na página inicial. Reiniciar o app invalida o token de páginas antigas. GETs não exigem token; os controles de Host/Origin continuam aplicados. Clientes locais sem `Origin` não são recusados só por sua ausência. Não existem cookies de sessão ou permissões por aba.
@@ -234,7 +234,7 @@ A base operacional é Python 3.11+, navegador e Ollama. O código foi validado c
 
 ### 8.2 Docker Engine nativo no Linux
 
-[compose.linux.yaml](../compose.linux.yaml) é um arquivo independente, não um override para mesclar com o padrão. Usa `network_mode: host`, app em `127.0.0.1:8765` e destino Ollama `127.0.0.1:11434`. Não há `ports`, GPU passthrough, serviço Ollama ou volume persistente.
+[compose.linux.yaml](../compose.linux.yaml) é um arquivo independente, não um override para mesclar com o padrão. Usa `network_mode: host`, app em `127.0.0.1:8765` e destino Ollama `127.0.0.1:11434`. Não há `ports`, GPU passthrough ou serviço Ollama. SDD-007 acrescenta volume nomeado apenas para histórico.
 
 O [Dockerfile](../Dockerfile) copia `app.py`, o pacote `backend/` e arquivos `web/` para `/app`, usa `python:3.12-slim`, impede escrita de bytecode e executa `python app.py --no-browser` como usuário numérico sem privilégios. A imagem base é uma tag, não um digest imutável; rebuilds futuros podem usar outra revisão da imagem. A execução Linux com Ollama real está evidenciada em `TEST_RESULTS.md` (evidência local não versionada).
 
@@ -298,7 +298,7 @@ Instrumentação é opt-in (`live_token_count=false` por padrão). Ao ligar, o c
 
 Prévia incompleta fica na memória até ser substituída, inclusive em falha/cancelamento, e pode aparecer no JSON exportado. Texto de thinking e metadata bruta não entram no estado. O frontend mantém textContent e não anuncia cada fragmento ao leitor de tela por uma região de texto aria-live de alto volume.
 
-A fronteira pública da PWA acrescenta FAQ estática e help.js, sem token nem consumo de API. Help.js contém somente tema e tooltips; app.js permanece responsável pelo benchmark. SW v2 armazena dez assets públicos explícitos, sem página principal, APIs, prévia, prompt, resposta ou exportações. Fontes externas na FAQ são links abertos por ação do usuário, sem fetch/CDN na página.
+A fronteira pública da PWA acrescenta FAQ estática e help.js, sem token nem consumo de API. Help.js contém somente tema e tooltips; app.js permanece responsável pelo benchmark. Na entrega SDD-003, SW v2 armazenava dez assets públicos explícitos, sem página principal, APIs, prévia, prompt, resposta ou exportações. Fontes externas na FAQ são links abertos por ação do usuário, sem fetch/CDN na página.
 
 A avaliação Windows está registrada em [TASK-WIN-01](backlog.md): reutilizar o Compose padrão até que um teste real demonstre necessidade de arquivo específico. Não há nova configuração Docker nesta mudança.
 
@@ -321,10 +321,28 @@ Coleta dinâmica ocorre fora dos locks. Solicitações concorrentes e teste ativ
 
 A faixa mantém a identidade visual do app em vez de criar um dashboard genérico: origem/SO, CPU/GPU/RAM separados em uma superfície, RAM com barra somente quando conhecida, detalhes inline responsivos e números tabulares. Scopes técnicos são traduzidos, nomes completos permanecem nos detalhes e o resumo pode abreviar prefixos redundantes somente para legibilidade. Hover-out sem pin/foco fecha após breve intervalo; botão/toque, Escape e Fechar preservam navegação sem modal ou focus trap.
 
-`system.js` é script público genérico separado, mas fica fora do cache; a FAQ não o carrega. SW v3 mantém dez assets públicos e nunca inventário ou `/api/system`. Contrato e minimização estão na [SDD-004](changes/004-resumo-ambiente-dinamico.md), [especificação](especificacao-tecnica.md) e [privacidade](../PRIVACY.md).
+`system.js` é script público genérico separado, mas fica fora do cache; a FAQ não o carrega. Na entrega SDD-004, SW v3 manteve dez assets públicos e nunca inventário ou `/api/system`. Contrato e minimização estão na [SDD-004](changes/004-resumo-ambiente-dinamico.md), [especificação](especificacao-tecnica.md) e [privacidade](../PRIVACY.md).
 
 ## Biblioteca e nome local (SDD-005/006)
 
 `prompts.js` reúne catálogo sintético e controlador do dialog nativo; `prompts.css` usa os temas existentes. O módulo só escreve no textarea por ação final e não depende do cliente Ollama. Escuta benchmark-status e revalida o estado local antes da aplicação. O servidor serve os dois assets pela whitelist; não existe API de catálogo, storage ou caminho de inferência novo. Os assets ficam fora do cache PWA v3.
 
 `SystemCollector` acrescenta hostname por socket.gethostname sem DNS, uma vez por instância, com sanitização e null em falha. É a única exceção de identificação local solicitada na SDD-006. O DOM rotula máquina/container; o campo permanece no inventário volátil separado do manager, CSV/JSON e cache.
+
+## Persistência local terminal (SDD-007)
+
+```mermaid
+flowchart LR
+    UI[history.js · seleção e confirmação] --> HTTP[HTTP mesma origem e token POST]
+    HTTP --> Manager[BenchmarkManager · atividade e restauração]
+    Manager --> Repo[HistoryRepository · JSON versionado]
+    Repo --> Profile[Perfil do processo · .ollama_benchmark]
+```
+
+O repositório é injetado na composição e separado de transporte, medição e inventário. Ao concluir a fila, o manager captura um snapshot terminal e o salva uma vez, fora do lock de estado e após a medição. IDs UUID hex selecionam somente arquivos da pasta fixa; carga valida envelope/configuração e checa atividade novamente antes de substituir o estado. Inicialização recupera o último válido sem chamar generate.
+
+Inventário/hostname/token não entram no envelope. Conteúdo de benchmark, incluindo prompts/respostas, agora é dado persistente autorizado; pasta e arquivos têm permissões restritas no Linux, escrita temporária+replace e falha genérica não fatal. Não existe checkpoint de streaming, pruning automático ou retomada de geração. Docker mantém root filesystem read-only e volume gravável dedicado no perfil do UID65534.
+
+A SDD-008 reorganiza somente a apresentação e agenda do polling: comparativo primeiro, instrumentação recolhível, catálogo/ajuda acessíveis e legenda de unidades. Não muda a metodologia ou o protocolo do Ollama.
+
+A decisão de retenção terminal e seus limites estão na [ADR-006](adr/006-historico-json-terminal-perfil.md). SDD-008 atualiza o cache para SWv4 sem ampliar os dez recursos públicos, para entregar a tela offline modificada em instalações existentes.

@@ -266,6 +266,13 @@
                         "tokens": null,
                         "prompt_cached_tokens": null,
                         "total_tokens": null
+                      },
+                      "history": {
+                        "enabled": true,
+                        "id": null,
+                        "saved_at": null,
+                        "saved": false,
+                        "warning": null
                       }
                     }
                   },
@@ -407,6 +414,13 @@
                         "tokens": 384,
                         "prompt_cached_tokens": null,
                         "total_tokens": 444
+                      },
+                      "history": {
+                        "enabled": true,
+                        "id": null,
+                        "saved_at": null,
+                        "saved": false,
+                        "warning": null
                       }
                     }
                   }
@@ -1210,6 +1224,219 @@
           }
         }
       }
+    },
+    "/api/history": {
+      "get": {
+        "operationId": "listHistory",
+        "summary": "Lista metadados de comparações locais terminais, mais recentes primeiro.",
+        "description": "Lista metadata+summary numérico por modelo, sem pedidos/respostas, mais recentes primeiro. started_at é a data original; saved_at é data do arquivo, fallback rotulado quando início indisponível. Varre arquivos sem índice/pruning. Falhas/corrupção geram warning genérico; sem repo enabled=false/items=[]. Cache-Control:no-store.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista e disponibilidade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryList"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/history/load": {
+      "post": {
+        "operationId": "loadHistory",
+        "summary": "Substitui estado pelo histórico escolhido, sem inferência.",
+        "description": "POST com token e JSON, IDUUIDhex, nenhuma leitura de caminho arbitrário. Atividade e geração revalidadas após IO. Carregar enquanto running/cancelling retorna409.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Se presente, deve coincidir exatamente com http:// + Host; ausente é aceito."
+          }
+        ],
+        "security": [
+          {
+            "PageToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryLoadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "JSON/objeto/id inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token/Host/Origin/Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Histórico ausente, inválido ou armazenamento indisponível; também caminho POST desconhecido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Timeout de leitura do corpo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Teste ativo ou estado alterado durante a carga.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content-Length ausente, negativo ou maior que64KiB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type não JSON ou Transfer-Encoding presente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Estado terminal restaurado; não inicia inferência.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/State"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/history.js": {
+      "get": {
+        "operationId": "getHistoryScript",
+        "summary": "Asset local da interface de histórico, fora do cache PWA",
+        "description": "Script genérico sem token/identificadores. Fora da allowlist de cache do SW e não carregado pela FAQ.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo.",
+            "content": {
+              "text/javascript": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/history.css": {
+      "get": {
+        "operationId": "getHistoryStyles",
+        "summary": "Asset local da interface de histórico, fora do cache PWA",
+        "description": "Script genérico sem token/identificadores. Fora da allowlist de cache do SW e não carregado pela FAQ.",
+        "responses": {
+          "200": {
+            "description": "JavaScript externo.",
+            "content": {
+              "text/css": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Host/Origin/Sec-Fetch-Site rejeitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1599,7 +1826,8 @@
           "error",
           "summary",
           "live",
-          "usage"
+          "usage",
+          "history"
         ],
         "properties": {
           "status": {
@@ -1685,6 +1913,9 @@
           },
           "usage": {
             "$ref": "#/components/schemas/Usage"
+          },
+          "history": {
+            "$ref": "#/components/schemas/HistoryMetadata"
           }
         },
         "additionalProperties": false
@@ -2198,6 +2429,268 @@
         },
         "additionalProperties": false,
         "description": "Inventário mínimo volátil do ambiente do backend, separado do benchmark. Null/lista GPU vazia significa desconhecido, não zero/ausência física. Nunca inclui identificadores pessoais, caminhos, alvos remotos ou dados de benchmark. Cgroup/container e kernel compartilhado têm escopo explícito."
+      },
+      "HistoryMetadata": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "id",
+          "saved_at",
+          "saved",
+          "warning"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "saved_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "HistoryItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "saved_at",
+          "status",
+          "models",
+          "started_at",
+          "runs",
+          "summary"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "runs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryModelSummary"
+            },
+            "description": "Uma linha numérica por modelo configurado; modelos sem resultado têm métricas nulas. Sem initial row/pedido/resposta. Medianas por job, nunca agregadas entre comparações."
+          }
+        }
+      },
+      "HistoryList": {
+        "type": "object",
+        "required": [
+          "items",
+          "enabled",
+          "warning"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "HistoryLoadRequest": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        },
+        "additionalProperties": true,
+        "description": "Somente id é utilizado; campos extras ignorados. Nunca aceita caminho de arquivo."
+      },
+      "StoredTerminalState": {
+        "type": "object",
+        "required": [
+          "status",
+          "settings",
+          "rows",
+          "current",
+          "started_at",
+          "error",
+          "live"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StartRequest"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Row"
+            }
+          },
+          "current": {
+            "type": "null"
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "live": {
+            "type": "null"
+          }
+        }
+      },
+      "HistoryEnvelope": {
+        "type": "object",
+        "required": [
+          "version",
+          "id",
+          "saved_at",
+          "state"
+        ],
+        "properties": {
+          "version": {
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "saved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "$ref": "#/components/schemas/StoredTerminalState"
+          }
+        },
+        "description": "Formato em disco, até64MiB. Summary e usage são recalculados na carga; token, inventário e live não são persistidos. Campos extras são projetados/ignorados na leitura."
+      },
+      "HistoryModelSummary": {
+        "type": "object",
+        "required": [
+          "model",
+          "repeated_count",
+          "tokens_per_s",
+          "first_text_s",
+          "wall_s",
+          "initial_wall_s"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "repeated_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tokens_per_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "first_text_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "wall_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "initial_wall_s": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
       }
     }
   }

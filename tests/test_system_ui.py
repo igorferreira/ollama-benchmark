@@ -40,7 +40,7 @@ class SystemUiTests(unittest.TestCase):
         self.assertFalse(page.duplicates)
         expected = {
             'system-environment', 'system-summary', 'system-details', 'system-heading',
-            'system-source', 'system-os', 'system-cpu', 'system-gpu', 'system-ram',
+            'system-source', 'system-os', 'system-summary-hostname', 'system-cpu', 'system-gpu', 'system-ram',
             'system-memory-bar', 'system-toggle', 'system-close', 'system-refresh',
             'system-collected', 'system-status', 'system-note', 'system-gpu-note',
         }
@@ -79,7 +79,7 @@ class SystemUiTests(unittest.TestCase):
         source = self.get('/sw.js')[2].decode()
         block = re.search(r'const PUBLIC_ASSETS = \[(.*?)\];', source, re.S).group(1)
         assets = re.findall(r"'([^']+)'", block)
-        self.assertIn("CACHE_PREFIX + 'v3'", source)
+        self.assertIn("CACHE_PREFIX + 'v4'", source)
         self.assertNotIn('/system.js', assets)
         self.assertNotIn('/api/system', assets)
         self.assertFalse(any(path.startswith('/api/') for path in assets))

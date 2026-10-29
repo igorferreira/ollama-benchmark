@@ -8,8 +8,13 @@ services:
       OLLAMA_URL: http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - benchmark-history:/home/benchmark/.ollama_benchmark
     read_only: true
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+volumes:
+  benchmark-history:

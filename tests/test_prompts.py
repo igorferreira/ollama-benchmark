@@ -99,7 +99,7 @@ class PromptTests(unittest.TestCase):
         block = re.search(r'const PUBLIC_ASSETS = \[(.*?)\];', sw, re.S).group(1)
         self.assertNotIn('/prompts.js', block)
         self.assertNotIn('/prompts.css', block)
-        self.assertIn("CACHE_PREFIX + 'v3'", sw)
+        self.assertIn("CACHE_PREFIX + 'v4'", sw)
         self.assertNotIn('/prompts.js', self.get('/faq.html')[2].decode())
         self.assertIn('textContent', source)
         self.assertIn("window.addEventListener('benchmark-status'", source)

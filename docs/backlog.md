@@ -33,10 +33,10 @@ Se necessário, a tarefa pode avaliar esse modo host opt-in do Desktop como alte
 
 ## TASK-PS-01 — Automatizar preparação e ciclo de vida no PowerShell
 
-- **Estado:** planejada; nenhum script implementado nesta solicitação.
+- **Estado:** início/parada nativos e Docker implementados na SDD-009; setup e homologação Windows real permanecem pendentes.
 - **Dependência:** TASK-WIN-01 para confirmar o modo Docker Desktop antes de automatizar sua operação.
 - **Objetivo:** depois de Python 3.11+ já instalado, permitir preparar/verificar o checkout e iniciar/parar somente o site deste projeto, com alternativas nativa e Docker.
-- **Artefatos candidatos:** `scripts/setup.ps1`, `start.ps1`, `stop.ps1`, `start-docker.ps1` e `stop-docker.ps1`. Os nomes/quantidade não são contrato: um script de ciclo de vida com parâmetros pode ser menor e igualmente completo.
+- **Artefatos implementados:** `start.sh`, `stop.sh`, `start.ps1` e `stop.ps1` na raiz, com flag de modo Docker e helper `scripts/service.py`. `scripts/setup.ps1` continua candidato futuro; não foi implementado.
 
 ### Subtarefas planejadas
 
@@ -58,7 +58,7 @@ Se necessário, a tarefa pode avaliar esse modo host opt-in do Desktop como alte
 - Não armazenar chaves/tokens nos scripts, logs ou estado versionado; estado operacional local precisa de ignore e tratamento de arquivo ausente/corrompido.
 - Início, parada, idempotência, erros e caminhos com espaços são testados no Windows real com PowerShell 5.1/7 antes de declarar homologação.
 
-Esta tarefa adiciona planejamento ao backlog e não substitui a entrega ativa de tokens ao vivo/FAQ. Nenhum script ou configuração Windows foi criado por este registro.
+A SDD-009 implementa os quatro scripts de início/parada na raiz, com modos nativo e Docker. O script de preparação/setup continua planejado; nenhuma instalação automática foi acrescentada. Homologação Windows real permanece pendente.
 
 ## TASK-SYS-01 — Resumo da máquina e detalhes acessíveis no site
 

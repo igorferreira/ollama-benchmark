@@ -14,6 +14,8 @@ WEB = Path(__file__).resolve().parent.parent / 'web'
 STATIC_ASSETS = {
     '/': ('index.html', 'text/html; charset=utf-8'),
     '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+    '/history.js': ('history.js', 'text/javascript; charset=utf-8'),
+    '/history.css': ('history.css', 'text/css; charset=utf-8'),
     '/system.js': ('system.js', 'text/javascript; charset=utf-8'),
     '/prompts.js': ('prompts.js', 'text/javascript; charset=utf-8'),
     '/prompts.css': ('prompts.css', 'text/css; charset=utf-8'),
@@ -96,6 +98,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_data(200, body, content_type)
         elif url.path == '/api/state':
             self.json(200, self.server.manager.snapshot())
+        elif url.path == '/api/history':
+            self.json(200, self.server.manager.history_list())
         elif url.path == '/api/system':
             if self.server.system_info is None:
                 self.json(503, {'error': 'Resumo do ambiente indisponível nesta instância.'})
@@ -145,6 +149,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/start':
                 self.server.manager.start(value)
                 self.json(202, {'status': 'running'})
+            elif self.path == '/api/history/load':
+                if not isinstance(value, dict):
+                    raise ValueError('Envie um objeto com o identificador do histórico.')
+                self.json(200, self.server.manager.load_history(value.get('id')))
             elif self.path == '/api/cancel':
                 self.server.manager.cancel()
                 self.json(200, {'status': self.server.manager.snapshot()['status']})
@@ -152,6 +160,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.json(404, {'error': 'Não encontrado.'})
         except (ValueError, UnicodeDecodeError) as exc:
             self.json(400, {'error': str(exc)})
+        except FileNotFoundError:
+            self.json(404, {'error': 'Histórico indisponível ou inválido.'})
         except RuntimeError as exc:
             self.json(409, {'error': str(exc)})
         except TimeoutError:

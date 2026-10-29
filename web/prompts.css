@@ -40,3 +40,5 @@
 @media(prefers-reduced-motion:reduce){.prompts-choice{transition:none}}
 
 .prompts-header-top{justify-content:flex-end}.prompts-guide-link{margin:8px 0 12px;font-size:.86rem}.prompts-guide-link a{color:var(--link);text-underline-offset:3px}
+
+#prompts-back-list{display:none;margin-bottom:12px;font-size:.8rem;padding:8px 10px}@media(max-width:650px){#prompts-back-list{display:inline-block}#prompts-preview-title{scroll-margin-top:8px}}

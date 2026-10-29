@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from queue import Queue
 import subprocess
+import tempfile
 import sys
 import threading
 import time
@@ -358,7 +359,9 @@ class AppTests(HttpFixture):
 class CliTests(unittest.TestCase):
     def test_cli_starts_composition_root_without_ollama(self):
         root = Path(__file__).resolve().parent.parent
-        environment = {**os.environ, 'APP_BIND': '127.0.0.1', 'APP_PORT': '8765', 'OLLAMA_URL': 'http://127.0.0.1:9'}
+        profile = tempfile.TemporaryDirectory()
+        self.addCleanup(profile.cleanup)
+        environment = {**os.environ, 'HOME': profile.name, 'USERPROFILE': profile.name, 'APP_BIND': '127.0.0.1', 'APP_PORT': '8765', 'OLLAMA_URL': 'http://127.0.0.1:9'}
         process = subprocess.Popen(
             [sys.executable, str(root / 'app.py'), '--no-browser', '--port', '0'],
             cwd=root, env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
